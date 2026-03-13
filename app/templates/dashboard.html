@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+{% comment %} meta 1-3 ne atu garantia katak browser sei la cache dadus, importante tebes iha dashboard ne'e hodi evita problema dadus la atual {% endcomment %}
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Estudante | SRE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">   
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-blue-600 tracking-tight">SRE</span>
+                    <span class="ml-2 text-gray-400 font-medium hidden md:block">| Sistema Rejistrasaun Estudante</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                       <a href="{% url 'logout' %}"> <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout </a>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="mb-6 p-4 rounded-xl flex items-center shadow-sm border 
+                {% if message.tags == 'success' %}bg-emerald-50 border-emerald-100 text-emerald-700{% else %}bg-red-50 border-red-100 text-red-700{% endif %}">
+                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %} mr-3 text-lg"></i>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard Visualizasaun</h1>
+                <p class="text-gray-500 text-sm">Monitoriza no jere dadus estudante sira nian.</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'rejistu_estudante' %}" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center no-underline">
+                    <i class="fa-solid fa-user-plus mr-2"></i> REJISTU ESTUDANTE
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-xl bg-blue-100 text-blue-600"><i class="fa-solid fa-users text-2xl"></i></div>
+                    <div class="ml-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Estudante</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ total_estudante }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-xl bg-pink-100 text-pink-600"><i class="fa-solid fa-venus text-2xl"></i></div>
+                    <div class="ml-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Feto</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ total_feto }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-xl bg-emerald-100 text-emerald-600"><i class="fa-solid fa-mars text-2xl"></i></div>
+                    <div class="ml-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Mane</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ total_mane }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Lista Detallu Estudante</h3>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span class="text-xs font-medium text-gray-400">Dadus Atual</span>
+                    </div>
+                </div>
+
+                <form method="GET" action="{% url 'dashboard' %}" class="relative w-full md:w-80">
+                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Buka Naran Estudante..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+                    <div class="absolute left-3 top-2.5 text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4 border-b border-gray-100 text-center">Nu.</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Naran Kompletu</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Departamentu</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Tinan</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Data Moris</th>
+                            <th class="px-6 py-4 border-b border-gray-100 text-center">Sexu</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Eskola Anterior</th>
+                            <th class="px-6 py-4 border-b border-gray-100 text-center">Foto</th>
+                            <th class="px-6 py-4 border-b border-gray-100 text-center">Asaun</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for est in estudante %}
+                        <tr class="hover:bg-blue-50/40 transition-colors group text-sm">
+                            <td class="px-6 py-4 text-center text-gray-400 font-medium">{{ forloop.counter0|add:estudante.start_index }}</td>
+                            <td class="px-6 py-4 font-bold text-gray-800">{{ est.naran }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-bold border border-blue-100">
+                                    {{ est.departamentu|default:"N/A" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">{{ est.idade }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ est.data_moris|date:"d M Y" }}</td>
+                            <td class="px-6 py-4 text-center">
+                                {% if est.sexu == 'L' or est.sexu == 'M' %}
+                                    <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase">Mane</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-md bg-pink-100 text-pink-700 text-[10px] font-bold uppercase">Feto</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-gray-600 italic">{{ est.eskola_anterior }}</td>
+                            <td class="px-6 py-4 flex justify-center">
+                                {% if est.foto %}
+                                    <img src="{{ est.foto.url }}" 
+                                         class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all">
+                                {% else %}
+                                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border-2 border-white shadow-sm">
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                           <td class="px-6 py-4">
+                                <div class="flex justify-center space-x-2">
+                                    <a href="{% url 'edit_estudante' est.id %}" class="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-500 hover:text-white transition-all border border-amber-100">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="{% url 'delete_estudante' est.id %}" 
+                                       onclick="return confirm('Ita boot hakarak hamoos dadus husi {{ est.naran }}?')" 
+                                       class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all border border-red-100">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <i class="fa-solid fa-folder-open text-6xl text-gray-200 mb-4"></i>
+                                    <p class="text-gray-400 font-medium text-lg">Dadus Mamuk.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if estudante.has_other_pages %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <div class="text-xs text-gray-500 font-medium">
+                    Hamosu {{ estudante.start_index }} to'o {{ estudante.end_index }} husi {{ total_estudante }} dadus
+                </div>
+                <div class="flex space-x-1">
+                    {% if estudante.has_previous %}
+                        <a href="?page={{ estudante.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                           class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+
+                    {% for num in estudante.paginator.page_range %}
+                        {% if estudante.number == num %}
+                            <span class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold border border-blue-600 shadow-md">{{ num }}</span>
+                        {% elif num > estudante.number|add:'-3' and num < estudante.number|add:'3' %}
+                            <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if estudante.has_next %}
+                        <a href="?page={{ estudante.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                           class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <footer class="mt-12 text-center text-gray-400 text-sm">
+            <p>&copy; 2026 SRE - Sistema Rejistrasaun Estudante.</p>
+        </footer>
+    </main>
+</body>
+</html>

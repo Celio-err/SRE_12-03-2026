@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if edit_mode %}Atuáliza{% else %}Rejistu{% endif %} Estudante | SRE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        input, select, textarea {
+            width: 100% !important;
+            height: 45px !important;
+            box-sizing: border-box !important;
+            display: block !important;
+            padding: 0 1rem !important;
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 0.75rem !important;
+            font-size: 0.875rem !important;
+            outline: none !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+        input:focus, select:focus {
+            background-color: #ffffff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-blue-600 px-8 py-7 text-white text-center">
+            <h2 class="text-2xl font-bold uppercase tracking-wide">
+                {% if edit_mode %}Atuáliza Dadus Estudante{% else %}Formuláriu Rejistu Estudante{% endif %}
+            </h2>
+            <p class="text-blue-100 mt-1 text-sm">
+                {% if edit_mode %}Hadia dadus estudante nian ho loloos{% else %}Prenxe dadus Estudante iha Formulariu ida ne'e{% endif %}
+            </p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="p-8 space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                {% for field in form %}
+                <div class="flex flex-col space-y-2">
+                    <label for="{{ field.id_for_label }}" class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                        {{ field.label }}
+                    </label>
+                    <div class="w-full">
+                        {% if field.name == 'sexu' or field.name == 'data_moris' or field.name == 'departamentu' %}
+                            {# Menggunakan default widget Django agar format Select/Choices muncul otomatis #}
+                            {{ field }}
+                        {% else %}
+                            <input type="{{ field.field.widget.input_type }}" 
+                                   name="{{ field.html_name }}" 
+                                   id="{{ field.auto_id }}"
+                                   value="{{ field.value|default_if_none:'' }}"
+                                   placeholder="Prenxe {{ field.label }}..."
+                                   {% if field.field.required %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                </div> 
+                {% endfor %}
+
+                <div class="md:col-span-2 flex flex-col items-center p-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 space-y-4">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {% if edit_mode %}Atuáliza Foto{% else %}Foto Estudante (Live) <span class="text-red-500">*</span>{% endif %}
+                    </label>
+
+                    <div class="w-full max-w-xs">
+                        <select id="videoSource" class="!h-[35px] !text-[11px] !py-0 !bg-white border-blue-200 shadow-sm">
+                            <option value="">Hili Kamera...</option>
+                        </select>
+                    </div>
+
+                    <div class="relative w-64 h-48 bg-black rounded-xl overflow-hidden shadow-inner border-2 border-gray-300">
+                        <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <img id="photo-preview" class="hidden w-full h-full object-cover border-4 border-blue-500 rounded-xl">
+                        
+                        {% if edit_mode and form.instance.foto %}
+                        <div id="old-photo-container" class="absolute inset-0">
+                            <img src="{{ form.instance.foto.url }}" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] py-1 text-center font-bold uppercase tracking-widest">
+                                Foto Atuál
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" id="start-camera" class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-100 transition-all">
+                            <i class="fa-solid fa-video mr-1"></i> {% if edit_mode %}TROKA FOTO{% else %}LOKE KAMERA{% endif %}
+                        </button>
+                        <button type="button" id="click-photo" class="hidden bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-all">
+                            <i class="fa-solid fa-camera mr-1"></i> KAPTURA IMAGEM
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" name="image_data" id="image_data">
+                    
+                    {% if edit_mode %}
+                    <p class="text-[10px] text-gray-400 italic">Bainhira la kaptura imagem foun, foto atual sei rai nafatin.</p>
+                    {% endif %}
+                </div>
+            </div> 
+
+            <div class="flex flex-col md:flex-row gap-4 pt-6 border-t border-gray-100 mt-4">
+                <button type="submit" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center">
+                    <i class="fa-solid fa-save mr-2"></i> 
+                    {% if edit_mode %}ATUÁLIZA DADUS{% else %}RAI DADUS{% endif %}
+                </button>
+                <a href="{% url 'dashboard' %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3.5 rounded-xl transition-all text-center no-underline">
+                    KANSELA
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form_el = document.querySelector('form');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const start_btn = document.getElementById('start-camera');
+        const click_btn = document.getElementById('click-photo');
+        const preview = document.getElementById('photo-preview');
+        const image_input = document.getElementById('image_data');
+        const videoSelect = document.getElementById('videoSource');
+        let currentStream;
+
+        // Validasi sebelum submit
+        form_el.addEventListener('submit', function(e) {
+            {% if not edit_mode %}
+            if (!image_input.value) {
+                e.preventDefault();
+                alert("Favor, kaptura foto estudante nian antes rai dadus!");
+                document.getElementById('videoSource').scrollIntoView({ behavior: 'smooth' });
+            }
+            {% endif %}
+        });
+
+        function stopMediaTracks() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        async function getDevices() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                videoSelect.innerHTML = '<option value="">Hili Kamera...</option>';
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Kamera ${index + 1}`;
+                    videoSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Erro list devices: ", err);
+            }
+        }
+
+        async function startCamera(deviceId) {
+            stopMediaTracks();
+            const constraints = {
+                video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                audio: false
+            };
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                video.srcObject = stream;
+                
+                const oldPhoto = document.getElementById('old-photo-container');
+                if (oldPhoto) oldPhoto.classList.add('hidden');
+
+                start_btn.classList.add('hidden');
+                click_btn.classList.remove('hidden');
+                video.classList.remove('hidden');
+                preview.classList.add('hidden');
+            } catch (err) {
+                alert("Kamera la bele loke: " + err);
+            }
+        }
+
+        getDevices();
+        start_btn.addEventListener('click', () => startCamera(videoSelect.value));
+        videoSelect.addEventListener('change', () => {
+            if (currentStream) startCamera(videoSelect.value);
+        });
+
+        click_btn.addEventListener('click', function() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            let data_url = canvas.toDataURL('image/jpeg', 0.9);
+            preview.src = data_url;
+            preview.classList.remove('hidden');
+            video.classList.add('hidden');
+            image_input.value = data_url;
+            click_btn.innerHTML = '<i class="fa-solid fa-sync mr-1"></i> KAPTURA FILA';
+        });
+    </script>
+</body>
+</html>
