@@ -1,13 +1,12 @@
 import base64
 from datetime import date
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
-
 from app.models import Estudante, FormEstudante
 
 # Create your views here.
@@ -17,9 +16,7 @@ def login_process(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        # Lakukan proses autentikasi di sini (misalnya, menggunakan Django's authentication system)
-        # Jika autentikasi berhasil, redirect ke dashboard atau halaman lain
-        # Jika gagal, tampilkan pesan error atau kembali ke halaman login
+        
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)

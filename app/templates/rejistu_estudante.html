@@ -120,89 +120,144 @@
     </div>
 
     <script>
-        const form_el = document.querySelector('form');
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const start_btn = document.getElementById('start-camera');
-        const click_btn = document.getElementById('click-photo');
-        const preview = document.getElementById('photo-preview');
-        const image_input = document.getElementById('image_data');
-        const videoSelect = document.getElementById('videoSource');
-        let currentStream;
+    const form_el = document.querySelector('form');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const start_btn = document.getElementById('start-camera');
+    const click_btn = document.getElementById('click-photo');
+    const preview = document.getElementById('photo-preview');
+    const image_input = document.getElementById('image_data');
+    const videoSelect = document.getElementById('videoSource');
+    let currentStream;
 
-        // Validasi sebelum submit
-        form_el.addEventListener('submit', function(e) {
-            {% if not edit_mode %}
-            if (!image_input.value) {
-                e.preventDefault();
-                alert("Favor, kaptura foto estudante nian antes rai dadus!");
-                document.getElementById('videoSource').scrollIntoView({ behavior: 'smooth' });
-            }
-            {% endif %}
-        });
-
-        function stopMediaTracks() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+    // Validasi sebelum submit
+    form_el.addEventListener('submit', function(e) {
+        {% if not edit_mode %}
+        if (!image_input.value) {
+            e.preventDefault();
+            alert("Favor, kaptura foto estudante nian antes rai dadus!");
+            document.getElementById('videoSource').scrollIntoView({ behavior: 'smooth' });
         }
+        {% endif %}
+    });
 
-        async function getDevices() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                videoSelect.innerHTML = '<option value="">Hili Kamera...</option>';
-                videoDevices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Kamera ${index + 1}`;
-                    videoSelect.appendChild(option);
-                });
-            } catch (err) {
-                console.error("Erro list devices: ", err);
-            }
+    function stopMediaTracks() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
         }
+    }
 
-        async function startCamera(deviceId) {
-            stopMediaTracks();
-            const constraints = {
-                video: { deviceId: deviceId ? { exact: deviceId } : undefined },
-                audio: false
-            };
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                currentStream = stream;
-                video.srcObject = stream;
-                
-                const oldPhoto = document.getElementById('old-photo-container');
-                if (oldPhoto) oldPhoto.classList.add('hidden');
-
-                start_btn.classList.add('hidden');
-                click_btn.classList.remove('hidden');
-                video.classList.remove('hidden');
-                preview.classList.add('hidden');
-            } catch (err) {
-                alert("Kamera la bele loke: " + err);
-            }
+    // Fungsi untuk memperbarui daftar kamera yang tersedia di dropdown
+    async function updateDeviceList() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            const currentSelected = videoSelect.value;
+            videoSelect.innerHTML = '<option value="">Hili Kamera (Default)...</option>';
+            
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Kamera ${index + 1}`;
+                if (device.deviceId === currentSelected) {
+                    option.selected = true;
+                }
+                videoSelect.appendChild(option);
+            });
+        } catch (err) {
+            console.error("Erro list devices: ", err);
         }
+    }
 
-        getDevices();
-        start_btn.addEventListener('click', () => startCamera(videoSelect.value));
-        videoSelect.addEventListener('change', () => {
-            if (currentStream) startCamera(videoSelect.value);
-        });
+    async function startCamera(deviceId) {
+        stopMediaTracks();
+        
+        // Buat constraints secara kondisional agar tidak error jika deviceId kosong
+        const videoConstraints = deviceId ? { deviceId: { exact: deviceId } } : true;
+        const constraints = {
+            video: videoConstraints,
+            audio: false
+        };
 
-        click_btn.addEventListener('click', function() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            let data_url = canvas.toDataURL('image/jpeg', 0.9);
-            preview.src = data_url;
-            preview.classList.remove('hidden');
-            video.classList.add('hidden');
-            image_input.value = data_url;
-            click_btn.innerHTML = '<i class="fa-solid fa-sync mr-1"></i> KAPTURA FILA';
-        });
-    </script>
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            currentStream = stream;
+            video.srcObject = stream;
+            
+            // Perbarui daftar kamera setelah izin diberikan (agar label nama kamera muncul)
+            await updateDeviceList();
+
+            const oldPhoto = document.getElementById('old-photo-container');
+            if (oldPhoto) oldPhoto.classList.add('hidden');
+
+            start_btn.classList.add('hidden');
+            click_btn.classList.remove('hidden');
+            video.classList.remove('hidden');
+            preview.classList.add('hidden');
+        } catch (err) {
+            console.error(err);
+            alert("Kamera la bele loke: " + (err.message || err));
+        }
+    }
+
+    // Event Listeners
+    start_btn.addEventListener('click', () => startCamera(videoSelect.value));
+    
+    videoSelect.addEventListener('change', () => {
+        if (videoSelect.value) {
+            startCamera(videoSelect.value);
+        }
+    });
+
+    click_btn.addEventListener('click', function() {
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        let data_url = canvas.toDataURL('image/jpeg', 0.9);
+        preview.src = data_url;
+        preview.classList.remove('hidden');
+        video.classList.add('hidden');
+        image_input.value = data_url;
+        click_btn.innerHTML = '<i class="fa-solid fa-sync mr-1"></i> KAPTURA FILA';
+    });
+
+    async function startCamera(deviceId) {
+    stopMediaTracks();
+    
+    // Gunakan constraint dasar tanpa memaksa resolusi tinggi agar inisialisasi lebih cepat
+    const videoConstraints = deviceId ? { deviceId: { exact: deviceId } } : true;
+    const constraints = {
+        video: videoConstraints,
+        audio: false
+    };
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        video.srcObject = stream;
+        
+        await updateDeviceList();
+
+        const oldPhoto = document.getElementById('old-photo-container');
+        if (oldPhoto) oldPhoto.classList.add('hidden');
+
+        start_btn.classList.add('hidden');
+        click_btn.classList.remove('hidden');
+        video.classList.remove('hidden');
+        preview.classList.add('hidden');
+    } catch (err) {
+        console.error("Error Kamera:", err);
+        
+        // Jika error terjadi karena deviceId spesifik bermasalah, coba panggil kamera default
+        if (deviceId) {
+            console.warn("Mencoba membuka kamera default...");
+            startCamera(""); 
+        } else {
+            alert("Kamera la bele loke: " + (err.message || err));
+        }
+    }
+}
+</script>
 </body>
 </html>

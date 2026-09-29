@@ -10,17 +10,19 @@
     <title>Login - SRE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
-<body class="bg-gray-50 h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-3 sm:p-4">
 
     <div class="max-w-md w-full">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">SR-ESTUDANTE</h1>
-            <p class="text-gray-500 mt-2 text-sm uppercase tracking-widest font-medium">Sistema Rejistrasaun Estudante</p>
+        <div class="text-center mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight">SR-ESTUDANTE</h1>
+            <p class="text-gray-500 mt-2 text-xs sm:text-sm uppercase tracking-widest font-medium px-2">Sistema Rejistrasaun Estudante</p>
         </div>
 
-        <div class="bg-white p-8 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">LOGIN</h2>
+        <!-- CARD LOGIN (FORM BIASA) -->
+        <div id="login-card" class="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-5 sm:mb-6 text-center">LOGIN</h2>
             
             <form action="{% url 'index' %}" method="POST" class="space-y-5">
                 <div>
@@ -63,11 +65,61 @@
                 </button>
             </form>
 
+            <!-- Divider -->
+            <div class="flex items-center my-6">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="mx-3 text-xs text-gray-400 uppercase font-medium">atau</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <!-- Tombol buka Scan QR -->
+            <button type="button" onclick="showQrCard()"
+                class="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95">
+                <i class="fa-solid fa-qrcode text-blue-600"></i>
+                Login husi QRCode
+            </button>
+
             <p class="mt-8 text-center text-xs text-gray-400">
                 &copy; Dezenvolve husi Celio Sousa Silva
             </p>
         </div>
+
+        <!-- CARD SCAN QR (tersembunyi awalnya) -->
+        <div id="qr-card" class="hidden bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
+            <div class="flex items-center justify-between mb-5 sm:mb-6">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800">SCAN QR</h2>
+                <button type="button" onclick="hideQrCard()" class="text-gray-400 hover:text-gray-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs sm:text-sm text-gray-500 mb-4 text-center">
+                Se QRCode ba Kamara hodi Scan
+            </p>
+
+            <!-- Wrapper untuk kamera QR: dibatasi lebar & rasio persegi agar rapi di semua layar -->
+            <div class="rounded-2xl overflow-hidden border-2 border-dashed border-blue-200 bg-gray-50 w-full max-w-[280px] sm:max-w-[320px] aspect-square mx-auto">
+                <div id="qr-reader" class="w-full h-full"></div>
+            </div>
+
+            <p id="qr-status" class="mt-4 text-center text-xs text-gray-400 px-2">
+                Menunggu izin kamera...
+            </p>
+
+            <button type="button" onclick="showLoginCard()"
+                class="w-full mt-5 sm:mt-6 flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95">
+                <i class="fa-solid fa-arrow-left"></i>
+                Fila
+            </button>
+        </div>
+
     </div>
+
+    <!-- Form tersembunyi untuk submit hasil scan QR ke server -->
+    <form id="qr-login-form" action="{% url 'index' %}" method="POST" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="qr_token" id="qr_token_input">
+    </form>
 
     <script>
         function togglePassword() {
@@ -82,6 +134,97 @@
                 passwordInput.type = 'password';
                 eyeIcon.classList.remove('fa-eye-slash');
                 eyeIcon.classList.add('fa-eye');
+            }
+        }
+
+        let html5QrCode = null;
+
+        function showQrCard() {
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('qr-card').classList.remove('hidden');
+            startQrScanner();
+        }
+
+        function showLoginCard() {
+            stopQrScanner();
+            document.getElementById('qr-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+        }
+
+        function hideQrCard() {
+            showLoginCard();
+        }
+
+        // Menghitung ukuran qrbox secara dinamis mengikuti lebar container (responsif)
+        function getQrBoxSize() {
+            const container = document.getElementById('qr-reader');
+            const w = container ? container.clientWidth : 250;
+            const size = Math.floor(Math.min(w, 280) * 0.7);
+            return { width: size, height: size };
+        }
+
+        function onScanSuccess(decodedText) {
+            const statusEl = document.getElementById('qr-status');
+            statusEl.textContent = "QR terdeteksi, memproses login...";
+            // Isi token hasil scan lalu submit form ke server
+            document.getElementById('qr_token_input').value = decodedText;
+            stopQrScanner();
+            document.getElementById('qr-login-form').submit();
+        }
+
+        function onScanFailure(errorMessage) {
+            // Frame tanpa QR, diabaikan (dipanggil berulang kali secara normal)
+        }
+
+        async function startQrScanner() {
+    const statusEl = document.getElementById('qr-status');
+    html5QrCode = new Html5Qrcode("qr-reader");
+    const config = { fps: 10, qrbox: getQrBoxSize() };
+
+    try {
+        const devices = await Html5Qrcode.getCameras();
+
+        if (!devices || devices.length === 0) {
+            statusEl.textContent = "Tidak ada kamera yang terdeteksi pada perangkat ini";
+            return;
+        }
+
+        const rearCamera = devices.find((d) =>
+            /back|rear|environment/i.test(d.label)
+        );
+
+        const cameraId = rearCamera
+            ? rearCamera.id
+            : (devices.length > 1 ? devices[devices.length - 1].id : devices[0].id);
+
+        await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
+        statusEl.textContent = "Kamera aktif, arahkan ke QR code";
+    } catch (err) {
+        console.error("getCameras/start gagal:", err);
+        try {
+            await html5QrCode.start(
+                { facingMode: { ideal: "environment" } },
+                config,
+                onScanSuccess,
+                onScanFailure
+            );
+            statusEl.textContent = "Kamera aktif, arahkan ke QR code";
+        } catch (err2) {
+            console.error("Fallback gagal:", err2);
+            statusEl.textContent = "Gagal: " + (err2?.name || "") + " - " + (err2?.message || err2);
+        }
+    }
+}
+        
+
+        function stopQrScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(() => {
+                    html5QrCode = null;
+                });
             }
         }
     </script>
