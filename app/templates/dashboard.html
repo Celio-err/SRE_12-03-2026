@@ -87,10 +87,10 @@
             <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
                 <div>
                     <h3 class="text-lg font-bold text-gray-800">Lista Detallu Estudante</h3>
-                    <div class="flex items-center space-x-2 mt-1">
-                        <span class="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-                        <span class="text-xs font-medium text-gray-400">Dadus Atual</span>
-                    </div>
+                    <a href="{% url 'export' %}"
+   class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+  Export ZIP
+</a>
                 </div>
 
                 <form method="GET" action="{% url 'dashboard' %}" class="relative w-full md:w-80">
@@ -109,7 +109,6 @@
                             <th class="px-6 py-4 border-b border-gray-100 text-center">Nu.</th>
                             <th class="px-6 py-4 border-b border-gray-100">Naran Kompletu</th>
                             <th class="px-6 py-4 border-b border-gray-100">Departamentu</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Tinan</th>
                             <th class="px-6 py-4 border-b border-gray-100">Data Moris</th>
                             <th class="px-6 py-4 border-b border-gray-100 text-center">Sexu</th>
                             <th class="px-6 py-4 border-b border-gray-100">Eskola Anterior</th>
@@ -127,7 +126,6 @@
                                     {{ est.departamentu|default:"N/A" }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-gray-600">{{ est.idade }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ est.data_moris|date:"d M Y" }}</td>
                             <td class="px-6 py-4 text-center">
                                 {% if est.sexu == 'L' or est.sexu == 'M' %}

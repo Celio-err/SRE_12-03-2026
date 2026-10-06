@@ -8,6 +8,15 @@ from django.core.files.base import ContentFile
 from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
 from app.models import Estudante, FormEstudante
+import csv
+from django.http import HttpResponse
+import io
+import os
+import zipfile
+from django.utils.text import slugify
+
+
+
 
 # Create your views here.
 
@@ -135,5 +144,46 @@ def dashboard(request):
         'total_feto': total_feto,
         'estudante': page_obj,
     }
-
     return render(request, 'dashboard.html', context)
+
+def export_canva(request):
+    # CSV dibuat di memori
+    csv_buf = io.StringIO()
+    writer = csv.writer(csv_buf)
+    writer.writerow([
+        "Nu", "Naran", "Departamentu", "Data Moris",
+        "Sexu", "Enderesu", "Munisipiu", "Eskola Anterior", "Foto",
+    ])
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for no, obj in enumerate(Estudante.objects.all(), start=1):
+            foto_name = ""
+
+            if obj.foto:
+                try:
+                    ext = os.path.splitext(obj.foto.name)[1].lower()
+                    # contoh nama: 001_budi-santos.jpg
+                    foto_name = f"{no:03d}_{slugify(obj.naran)}{ext}"
+                    zf.write(obj.foto.path, arcname=f"foto/{foto_name}")
+                except FileNotFoundError:
+                    foto_name = ""  # file foto tidak ditemukan di disk
+
+            writer.writerow([
+                no,
+                obj.naran,
+                obj.departamentu,
+                obj.data_moris.strftime("%d/%m/%Y") if obj.data_moris else "",
+                obj.sexu,
+                obj.enderesu,
+                obj.munisipiu,
+                obj.eskola_anterior,
+                foto_name,
+            ])
+
+        # BOM (\ufeff) supaya karakter khusus terbaca benar
+        zf.writestr("data_estudante.csv", "\ufeff" + csv_buf.getvalue())
+
+    response = HttpResponse(zip_buf.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = 'attachment; filename="estudante.zip"'
+    return response
