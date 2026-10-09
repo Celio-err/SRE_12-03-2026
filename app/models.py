@@ -40,7 +40,7 @@ class FormEstudante(forms.ModelForm):
             'data_moris': forms.DateInput(attrs={
                 'type': 'date', # Membuat muncul kalender
                 'onchange': 'calculateAge()',  
-                 'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none' # Memanggil fungsi JavaScript saat tanggal berubah
+                'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none' # Memanggil fungsi JavaScript saat tanggal berubah
             }),
             'sexu': forms.Select(attrs={
                 'class': 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none'
