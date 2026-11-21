@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ID Card - {{ estudante.naran|default:"Estudante" }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f2f4f8;
+      font-family: 'Poppins', sans-serif;
+      padding: 20px;
+    }
+
+    /* Ukuran standar ID Card (CR80 proporsional: 340px x 540px) */
+    .id-card {
+      position: relative;
+      width: 340px;
+      height: 540px;
+      background-color: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(15, 35, 65, 0.12);
+      border: 1px solid #e4e9f0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 26px 24px 34px;
+    }
+
+    /* --- Elemen Dekoratif Geometris --- */
+    .shape-left-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 270px;
+      background-color: #1663b2;
+      clip-path: polygon(0 0, 100% 0, 100% 89%, 0 100%);
+      z-index: 1;
+    }
+
+    .shape-top-left {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 78px;
+      height: 78px;
+      background-color: #4a89c8;
+      opacity: 0.85;
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+      z-index: 2;
+    }
+
+    .curve-right {
+      position: absolute;
+      top: 65px;
+      right: -45px;
+      width: 140px;
+      height: 110px;
+      border-bottom: 6px solid rgba(114, 172, 230, 0.55);
+      border-left: 6px solid transparent;
+      border-radius: 50%;
+      transform: rotate(18deg);
+      pointer-events: none;
+    }
+
+    .curve-left-bottom {
+      position: absolute;
+      bottom: 42px;
+      left: -45px;
+      width: 120px;
+      height: 100px;
+      border-top: 6px solid rgba(114, 172, 230, 0.55);
+      border-right: 6px solid transparent;
+      border-radius: 50%;
+      transform: rotate(22deg);
+      pointer-events: none;
+    }
+
+    .shape-bottom-right {
+      position: absolute;
+      bottom: 24px;
+      right: 0;
+      width: 56px;
+      height: 56px;
+      background-color: #5592ce;
+      clip-path: polygon(100% 0, 0 100%, 100% 100%);
+      z-index: 1;
+    }
+
+    .shape-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 24px;
+      background-color: #1663b2;
+      z-index: 2;
+    }
+
+    /* --- Konten Utama --- */
+    .content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .brand-header img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .brand-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #122136;
+    }
+
+    /* Foto Profil */
+    .photo-frame {
+      width: 140px;
+      height: 155px;
+      background-color: #d6dae0;
+      border: 4px solid #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    .photo-placeholder {
+      font-size: 12px;
+      color: #5a677a;
+      text-align: center;
+      padding: 8px;
+    }
+
+    /* Nama */
+    .employee-name {
+      font-size: 21px;
+      font-weight: 700;
+      color: #122136;
+      letter-spacing: -0.3px;
+      margin-bottom: 18px;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    /* Tabel Detail Informasi */
+    .info-table {
+      width: 100%;
+      padding-left: 12px;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      font-size: 12px;
+      padding: 4.5px 0;
+      color: #122136;
+      vertical-align: top;
+    }
+
+    .info-table td.label {
+      font-weight: 700;
+      width: 118px; /* Disesuaikan untuk label bahasa Tetum */
+      white-space: nowrap;
+    }
+
+    .info-table td.colon {
+      width: 10px;
+      font-weight: 500;
+    }
+
+    .info-table td.value {
+      font-weight: 500;
+      color: #1e2d42;
+      word-break: break-word;
+    }
+
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+      }
+      .id-card {
+        box-shadow: none;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="id-card">
+    <!-- Bentuk Dekoratif -->
+    <div class="shape-left-bar"></div>
+    <div class="shape-top-left"></div>
+    <div class="curve-right"></div>
+    <div class="curve-left-bottom"></div>
+    <div class="shape-bottom-right"></div>
+    <div class="shape-bottom-bar"></div>
+
+    <!-- Konten ID Card -->
+    <div class="content">
+      <!-- Logo & Nama Instansi/Sekolah -->
+      <div class="brand-header">
+        <!-- Ganti dengan path logo static Anda jika ada -->
+        <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+        <div class="brand-text">
+          Kartaun<br>Identidade
+        </div>
+      </div>
+
+      <!-- Foto Profil Dinamis -->
+      <div class="photo-frame">
+        {% if estudante.foto %}
+          <img src="{{ estudante.foto.url }}" alt="{{ estudante.naran }}" />
+        {% else %}
+          <span class="photo-placeholder">Laiha Foto</span>
+        {% endif %}
+      </div>
+
+      <!-- Nama Lengkap -->
+      <h1 class="employee-name">{{ estudante.naran }}</h1>
+
+      <!-- Detail Data dari models.py -->
+      <table class="info-table">
+        <tr>
+          <td class="label">Departamentu</td>
+          <td class="colon">:</td>
+          <td class="value">{{ estudante.departamentu }}</td>
+        </tr>
+        <tr>
+          <td class="label">Data Moris</td>
+          <td class="colon">:</td>
+          <td class="value">{{ estudante.data_moris|date:"d F Y" }}</td>
+        </tr>
+        <tr>
+          <td class="label">Sexu</td>
+          <td class="colon">:</td>
+          <td class="value">{{ estudante.get_sexu_display }}</td>
+        </tr>
+        <tr>
+          <td class="label">Eskola Anterior</td>
+          <td class="colon">:</td>
+          <td class="value">{{ estudante.eskola_anterior }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

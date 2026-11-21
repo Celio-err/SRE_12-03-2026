@@ -1,0 +1,407 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Print Todos Kartaun Estudante</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #f2f4f8;
+      font-family: 'Poppins', sans-serif;
+      padding: 24px;
+    }
+
+    /* Toolbar aksi di bagian atas layar (hilang saat dicetak) */
+    .toolbar {
+      max-width: 1120px;
+      margin: 0 auto 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid #e4e9f0;
+      box-shadow: 0 4px 16px rgba(15, 35, 65, 0.06);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-info h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #122136;
+    }
+
+    .toolbar-info p {
+      font-size: 12px;
+      color: #5a677a;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: 0.2s ease;
+    }
+
+    .btn-back {
+      background-color: #eef2f7;
+      color: #1e2d42;
+    }
+
+    .btn-back:hover {
+      background-color: #dfe6ef;
+    }
+
+    .btn-print {
+      background-color: #1663b2;
+      color: #ffffff;
+    }
+
+    .btn-print:hover {
+      background-color: #114e8d;
+    }
+
+    /* Container Grid untuk Banyak Kartu */
+    .cards-container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    /* Ukuran standar ID Card */
+    .id-card {
+      position: relative;
+      width: 340px;
+      height: 540px;
+      background-color: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(15, 35, 65, 0.12);
+      border: 1px solid #e4e9f0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 26px 24px 34px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* --- Elemen Dekoratif Geometris --- */
+    .shape-left-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 270px;
+      background-color: #1663b2;
+      clip-path: polygon(0 0, 100% 0, 100% 89%, 0 100%);
+      z-index: 1;
+    }
+
+    .shape-top-left {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 78px;
+      height: 78px;
+      background-color: #4a89c8;
+      opacity: 0.85;
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+      z-index: 2;
+    }
+
+    .curve-right {
+      position: absolute;
+      top: 65px;
+      right: -45px;
+      width: 140px;
+      height: 110px;
+      border-bottom: 6px solid rgba(114, 172, 230, 0.55);
+      border-left: 6px solid transparent;
+      border-radius: 50%;
+      transform: rotate(18deg);
+      pointer-events: none;
+    }
+
+    .curve-left-bottom {
+      position: absolute;
+      bottom: 42px;
+      left: -45px;
+      width: 120px;
+      height: 100px;
+      border-top: 6px solid rgba(114, 172, 230, 0.55);
+      border-right: 6px solid transparent;
+      border-radius: 50%;
+      transform: rotate(22deg);
+      pointer-events: none;
+    }
+
+    .shape-bottom-right {
+      position: absolute;
+      bottom: 24px;
+      right: 0;
+      width: 56px;
+      height: 56px;
+      background-color: #5592ce;
+      clip-path: polygon(100% 0, 0 100%, 100% 100%);
+      z-index: 1;
+    }
+
+    .shape-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 24px;
+      background-color: #1663b2;
+      z-index: 2;
+    }
+
+    /* --- Konten Utama --- */
+    .content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .brand-header img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .brand-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #122136;
+    }
+
+    .photo-frame {
+      width: 140px;
+      height: 155px;
+      background-color: #d6dae0;
+      border: 4px solid #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    .photo-placeholder {
+      font-size: 12px;
+      color: #5a677a;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .employee-name {
+      font-size: 21px;
+      font-weight: 700;
+      color: #122136;
+      letter-spacing: -0.3px;
+      margin-bottom: 18px;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .info-table {
+      width: 100%;
+      padding-left: 12px;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      font-size: 12px;
+      padding: 4.5px 0;
+      color: #122136;
+      vertical-align: top;
+    }
+
+    .info-table td.label {
+      font-weight: 700;
+      width: 118px;
+      white-space: nowrap;
+    }
+
+    .info-table td.colon {
+      width: 10px;
+      font-weight: 500;
+    }
+
+    .info-table td.value {
+      font-weight: 500;
+      color: #1e2d42;
+      word-break: break-word;
+    }
+
+    .empty-state {
+      background: #ffffff;
+      padding: 40px 24px;
+      border-radius: 16px;
+      text-align: center;
+      color: #5a677a;
+      border: 1px solid #e4e9f0;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* --- Pengaturan Cetak --- */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .toolbar {
+        display: none !important;
+      }
+
+      .cards-container {
+        max-width: none;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 14px;
+      }
+
+      .id-card {
+        box-shadow: none;
+        border: 1px solid #d7dfe9;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toolbar Kontrol (Tidak ikut tercetak) -->
+  <div class="toolbar">
+    <div class="toolbar-info">
+      <h1>Pré-visualizasaun Kartaun Estudante</h1>
+      <p>Total kartaun atu imprime: <strong>{{ estudantes|length }}</strong></p>
+    </div>
+    <div class="toolbar-actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-back">← Fila ba Dashboard</a>
+      <button type="button" onclick="window.print()" class="btn btn-print">🖨️ Print Kartaun</button>
+    </div>
+  </div>
+
+  <!-- Daftar Semua Kartaun -->
+  <div class="cards-container">
+    {% for estudante in estudantes %}
+      <div class="id-card">
+        <div class="shape-left-bar"></div>
+        <div class="shape-top-left"></div>
+        <div class="curve-right"></div>
+        <div class="curve-left-bottom"></div>
+        <div class="shape-bottom-right"></div>
+        <div class="shape-bottom-bar"></div>
+
+        <div class="content">
+          <div class="brand-header">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+            <div class="brand-text">
+              Kartaun<br>Identidade
+            </div>
+          </div>
+
+          <div class="photo-frame">
+            {% if estudante.foto %}
+              <img src="{{ estudante.foto.url }}" alt="{{ estudante.naran }}" />
+            {% else %}
+              <span class="photo-placeholder">Laiha Foto</span>
+            {% endif %}
+          </div>
+
+          <h2 class="employee-name">{{ estudante.naran }}</h2>
+
+          <table class="info-table">
+            <tr>
+              <td class="label">Departamentu</td>
+              <td class="colon">:</td>
+              <td class="value">{{ estudante.departamentu }}</td>
+            </tr>
+            <tr>
+              <td class="label">Data Moris</td>
+              <td class="colon">:</td>
+              <td class="value">{{ estudante.data_moris|date:"d F Y" }}</td>
+            </tr>
+            <tr>
+              <td class="label">Sexu</td>
+              <td class="colon">:</td>
+              <td class="value">{{ estudante.get_sexu_display }}</td>
+            </tr>
+            <tr>
+              <td class="label">Eskola Anterior</td>
+              <td class="colon">:</td>
+              <td class="value">{{ estudante.eskola_anterior }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty-state">
+        <p>Laiha dadus estudante atu imprime.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</body>
+</html>

@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from app import views
-from app.views import RejistuEstudante, dashboard, delete_estudante, edit_estudante, index, login_process, logout_process, export_canva
+from app.views import RejistuEstudante, dashboard, delete_estudante, edit_estudante, login_process, logout_process, kartaun_estudante, print_todos_kartaun
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,7 +30,8 @@ urlpatterns = [
     path('rejistu_estudante/', RejistuEstudante, name='rejistu_estudante'),
     path('edit_estudante/<int:pk>/', edit_estudante, name='edit_estudante'),
     path('delete_estudante/<int:pk>/', delete_estudante, name='delete_estudante'),
-    path("export/", export_canva, name="export"),
+    path('kartaun/<int:pk>/', kartaun_estudante, name='kartaun_estudante'),
+    path('print_todos_kartaun/', print_todos_kartaun, name='print_todos_kartaun'),
 ]
 
 if settings.DEBUG:

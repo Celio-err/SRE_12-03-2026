@@ -146,44 +146,19 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
-def export_canva(request):
-    # CSV dibuat di memori
-    csv_buf = io.StringIO()
-    writer = csv.writer(csv_buf)
-    writer.writerow([
-        "Nu", "Naran", "Departamentu", "Data Moris",
-        "Sexu", "Enderesu", "Munisipiu", "Eskola Anterior", "Foto",
-    ])
+@never_cache
+@login_required(login_url='index')
+def print_todos_kartaun(request):
+    queryset = Estudante.objects.all().order_by('-id')
 
-    zip_buf = io.BytesIO()
-    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for no, obj in enumerate(Estudante.objects.all(), start=1):
-            foto_name = ""
+    search_query = request.GET.get('search')
+    if search_query:
+        queryset = queryset.filter(naran__icontains=search_query)
 
-            if obj.foto:
-                try:
-                    ext = os.path.splitext(obj.foto.name)[1].lower()
-                    # contoh nama: 001_budi-santos.jpg
-                    foto_name = f"{no:03d}_{slugify(obj.naran)}{ext}"
-                    zf.write(obj.foto.path, arcname=f"foto/{foto_name}")
-                except FileNotFoundError:
-                    foto_name = ""  # file foto tidak ditemukan di disk
+    return render(request, 'print_kartaun.html', {
+        'estudantes': queryset,
+    })
 
-            writer.writerow([
-                no,
-                obj.naran,
-                obj.departamentu,
-                obj.data_moris.strftime("%d/%m/%Y") if obj.data_moris else "",
-                obj.sexu,
-                obj.enderesu,
-                obj.munisipiu,
-                obj.eskola_anterior,
-                foto_name,
-            ])
-
-        # BOM (\ufeff) supaya karakter khusus terbaca benar
-        zf.writestr("data_estudante.csv", "\ufeff" + csv_buf.getvalue())
-
-    response = HttpResponse(zip_buf.getvalue(), content_type="application/zip")
-    response["Content-Disposition"] = 'attachment; filename="estudante.zip"'
-    return response
+def kartaun_estudante(request, pk):
+    estudante = get_object_or_404(Estudante, pk=pk)
+    return render(request, 'kartaun.html', {'estudante': estudante})
