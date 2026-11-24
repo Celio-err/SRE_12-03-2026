@@ -14,6 +14,7 @@ import io
 import os
 import zipfile
 from django.utils.text import slugify
+from django.db.models import Count, Q
 
 
 
@@ -121,27 +122,69 @@ def index(request):
 @never_cache
 @login_required(login_url='index')
 def dashboard(request):
-    estudante = Estudante.objects.all().order_by('-id')  # Mengambil semua data Estudante dan mengurutkannya berdasarkan ID secara menurun
-   
-    # Fitur pencarian berdasarkan nama atau departemen
-    search_query = request.GET.get('search')
+    # ---- Table: newest first, search by name or department ----
+    estudante = Estudante.objects.all().order_by('-id')
+
+    search_query = (request.GET.get('search') or '').strip()
     if search_query:
-        estudante = estudante.filter(naran__icontains=search_query) | estudante.filter(departamentu__icontains=search_query)
+        estudante = estudante.filter(
+            Q(naran__icontains=search_query) | Q(departamentu__icontains=search_query)
+        )
 
-    paginator = Paginator(estudante, 20)  # Menampilkan 20 data per halaman
+    page_obj = Paginator(estudante, 10).get_page(request.GET.get('page'))
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # ---- KPI cards: one query instead of three ----
+    totals = Estudante.objects.aggregate(
+        total=Count('id'),
+        mane=Count('id', filter=Q(sexu='M')),
+        feto=Count('id', filter=Q(sexu='F')),
+    )
 
-    # Mengambil jumlah total data dari tabel Estudante
-    total_estudante = Estudante.objects.count()
-    # Mengambil jumlah total data berdasarkan jenis kelamin
-    total_mane = Estudante.objects.filter(sexu='M').count()
-    total_feto = Estudante.objects.filter(sexu='F').count()
+    # ---- Department chart: students per department, split by gender ----
+    rows = (
+        Estudante.objects
+        .values('departamentu')
+        .annotate(
+            mane=Count('id', filter=Q(sexu='M')),
+            feto=Count('id', filter=Q(sexu='F')),
+        )
+    )
+
+    # Merge blank/NULL departments into one "N/A" bar
+    merged = {}
+    for r in rows:
+        name = (r['departamentu'] or '').strip() or 'N/A'
+        d = merged.setdefault(name, {'departamentu': name, 'mane': 0, 'feto': 0})
+        d['mane'] += r['mane']
+        d['feto'] += r['feto']
+
+    departamentu_stats = sorted(
+        merged.values(), key=lambda d: d['mane'] + d['feto'], reverse=True
+    )
+
+    # ---- Munisipiu charts: students per municipality ----
+    mun_rows = (
+        Estudante.objects
+        .values('munisipiu')
+        .annotate(total=Count('id'))
+    )
+
+    merged_mun = {}
+    for r in mun_rows:
+        name = (r['munisipiu'] or '').strip() or 'N/A'
+        merged_mun[name] = merged_mun.get(name, 0) + r['total']
+
+    munisipiu_stats = [
+        {'munisipiu': n, 'total': t}
+        for n, t in sorted(merged_mun.items(), key=lambda x: x[1], reverse=True)
+    ]
+
     context = {
-        'total_estudante': total_estudante, 
-        'total_mane': total_mane,
-        'total_feto': total_feto,
+        'total_estudante': totals['total'],
+        'total_mane': totals['mane'],
+        'total_feto': totals['feto'],
+        'departamentu_stats': departamentu_stats,   # feeds the department chart
+        'munisipiu_stats': munisipiu_stats,         # feeds the two munisipiu charts
         'estudante': page_obj,
     }
     return render(request, 'dashboard.html', context)

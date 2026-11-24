@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="tet">
 <head>
 {% comment %} meta 1-3 ne atu garantia katak browser sei la cache dadus, importante tebes iha dashboard ne'e hodi evita problema dadus la atual {% endcomment %}
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -8,221 +8,528 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Estudante | SRE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">   
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('has-motion');
+    </script>
+<style>
+:root{
+  --brand:#1e4fd8; --brand-d:#173fae; --navy:#0e1a3b; --bg:#f3f5f9; --surface:#fff; --line:#e3e8f1;
+  --text:#101828; --muted:#566074; --faint:#8a93a6;
+  --mane:#1e4fd8; --feto:#f08a24; --ok:#067647; --err:#b42318;
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.has-motion [data-reveal]{visibility:hidden}
+:focus-visible{outline:3px solid rgba(30,79,216,.45);outline-offset:2px;border-radius:6px}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1240px;margin:0 auto;height:64px;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:.95rem}
+.brand small{display:none;font-weight:500;color:var(--faint);font-size:.85rem}
+@media(min-width:768px){.brand small{display:inline}}
+.logout{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:10px;font-size:.85rem;font-weight:600;color:var(--err);border:1px solid #fecdca;background:#fef3f2;transition:background .2s,color .2s}
+.logout:hover{background:var(--err);color:#fff}
+
+/* Layout */
+main{max-width:1240px;margin:0 auto;padding:28px 20px 40px}
+.head{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+@media(min-width:768px){.head{flex-direction:row;align-items:center;justify-content:space-between}}
+.head h1{font-size:1.65rem;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.head p{color:var(--muted);font-size:.92rem;margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:46px;padding:0 20px;border-radius:12px;font-size:.9rem;font-weight:700;border:0;cursor:pointer;transition:background .2s,transform .15s,box-shadow .2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 8px 18px -8px rgba(30,79,216,.7)}
+.btn-primary:hover{background:var(--brand-d)}
+.btn-sm{height:38px;padding:0 14px;font-size:.8rem;border-radius:10px}
+.btn-soft{background:#eef3ff;color:var(--brand);border:1px solid #d3e0ff}
+.btn-soft:hover{background:var(--brand);color:#fff}
+
+.alert{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;margin-bottom:20px;font-size:.9rem;font-weight:500;border:1px solid}
+.alert.ok{background:#ecfdf3;border-color:#abefc6;color:var(--ok)}
+.alert.bad{background:#fef3f2;border-color:#fecdca;color:var(--err)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+
+/* KPI */
+.kpis{display:grid;gap:16px;grid-template-columns:1fr;margin-bottom:16px}
+@media(min-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kpi{padding:20px 22px;display:flex;align-items:center;gap:16px;transition:box-shadow .25s,transform .25s}
+.kpi:hover{box-shadow:0 14px 30px -18px rgba(16,24,40,.3);transform:translateY(-2px)}
+.ico{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:1.25rem;flex:none}
+.ico.total{background:#e8ecf7;color:var(--navy)}.ico.feto{background:#fdf0e2;color:var(--feto)}.ico.mane{background:#e8efff;color:var(--mane)}
+.kpi .lab{font-size:.78rem;font-weight:600;color:var(--muted)}
+.kpi .num{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .cap{font-size:.78rem;color:var(--faint)}
+
+/* Charts */
+.charts{display:grid;gap:16px;grid-template-columns:1fr;margin-bottom:16px}
+@media(min-width:1024px){.charts{grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr)}}
+.chart-card{padding:22px}
+.ch-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+.ch-head h2{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
+.ch-head p{font-size:.8rem;color:var(--muted);margin-top:2px}
+.legend{display:flex;gap:14px;font-size:.78rem;font-weight:600;color:var(--muted)}
+.legend span::before,.lg i{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:var(--c)}
+.donut{display:grid;gap:20px;align-items:center}
+@media(min-width:520px) and (max-width:1023px){.donut{grid-template-columns:1fr 1fr}}
+.donut-box{position:relative;width:100%;max-width:230px;aspect-ratio:1;margin:0 auto}
+.donut-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.donut-center b{font-size:1.9rem;font-weight:800;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.donut-center span{font-size:.75rem;color:var(--muted)}
+.lg{list-style:none;display:grid;gap:10px}
+.lg li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:.88rem}
+.lg li div{display:flex;align-items:center;font-weight:600}
+.lg li b{font-variant-numeric:tabular-nums}
+.lg li em{font-style:normal;color:var(--faint);font-size:.78rem;margin-left:6px}
+.bar-box{position:relative;width:100%;min-height:260px}
+.empty-mini{display:grid;place-items:center;text-align:center;min-height:220px;color:var(--muted);font-size:.9rem;padding:0 16px}
+.empty-mini i{font-size:1.8rem;color:#c6cddb;margin-bottom:10px;display:block}
+[hidden]{display:none!important}
+@media(min-width:1024px){.charts.flip{grid-template-columns:minmax(0,1.5fr) minmax(0,.9fr)}}
+.xscroll{overflow-x:auto;padding-bottom:4px}
+.xin{position:relative;height:320px;min-width:100%}
+
+/* Table card */
+.tbl-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+@media(min-width:900px){.tbl-head{flex-direction:row;align-items:center;justify-content:space-between}}
+.tbl-head h2{font-size:1.05rem;font-weight:700}
+.tbl-head .sum{font-size:.8rem;color:var(--muted);font-weight:500}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{position:relative;flex:1 1 260px;min-width:220px}
+.search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:.85rem;pointer-events:none}
+.search input{width:100%;height:38px;padding:0 14px 0 38px;font:inherit;font-size:.85rem;border:1px solid var(--line);border-radius:10px;background:#f8f9fc;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.search input:focus{background:#fff;border-color:var(--brand);box-shadow:0 0 0 4px rgba(30,79,216,.14)}
+.clear{font-size:.8rem;font-weight:600;color:var(--brand)}
+.clear:hover{text-decoration:underline}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th{padding:12px 20px;text-align:left;background:#f8f9fc;border-bottom:1px solid var(--line);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+td{padding:14px 20px;border-bottom:1px solid #eef1f6;font-size:.88rem}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:#f6f9ff}
+tbody tr:last-child td{border-bottom:0}
+.c{text-align:center}
+.name{font-weight:700}
+.muted{color:var(--muted)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700}
+.pill.dept{background:#eef3ff;color:var(--brand);border:1px solid #d3e0ff}
+.pill.mane{background:#e8efff;color:#1639a8}
+.pill.feto{background:#fdf0e2;color:#a2540b}
+.ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 2px var(--line);display:block;margin:0 auto}
+.ava-ph{width:40px;height:40px;border-radius:50%;background:#eef1f6;color:var(--faint);display:grid;place-items:center;margin:0 auto}
+.acts{display:flex;justify-content:center;gap:8px}
+.act{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:.85rem;border:1px solid;transition:background .2s,color .2s}
+.act.view{background:#eef3ff;color:var(--brand);border-color:#d3e0ff}.act.view:hover{background:var(--brand);color:#fff}
+.act.edit{background:#fffaeb;color:#b54708;border-color:#fedf89}.act.edit:hover{background:#dc6803;color:#fff}
+.act.del{background:#fef3f2;color:var(--err);border-color:#fecdca}.act.del:hover{background:var(--err);color:#fff}
+.hide-sm{display:none}
+@media(min-width:900px){.hide-sm{display:table-cell}}
+.empty{padding:64px 20px;text-align:center}
+.empty i{font-size:2.6rem;color:#c6cddb;margin-bottom:14px;display:block}
+.empty h3{font-size:1.05rem;font-weight:700}
+.empty p{color:var(--muted);font-size:.9rem;margin:6px auto 18px;max-width:30em}
+.pager{padding:14px 22px;background:#f8f9fc;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.pager .sum{font-size:.8rem;color:var(--muted);font-weight:500}
+.pages{display:flex;gap:6px}
+.pg{min-width:36px;height:36px;padding:0 10px;display:grid;place-items:center;border-radius:10px;font-size:.82rem;font-weight:700;background:#fff;border:1px solid var(--line);color:var(--muted);transition:background .2s,color .2s}
+a.pg:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pg.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+footer{margin-top:36px;text-align:center;font-size:.8rem;color:var(--faint)}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body>
 
-    <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <span class="text-2xl font-bold text-blue-600 tracking-tight">SRE</span>
-                    <span class="ml-2 text-gray-400 font-medium hidden md:block">| Sistema Rejistrasaun Estudante</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'logout' %}" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
-                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
-                    </a>
-                </div>
-            </div>
+<nav class="nav">
+  <div class="nav-in">
+    <div class="brand"><span class="logo">S</span>SRE<small>| Sistema Rejistrasaun Estudante</small></div>
+    <a href="{% url 'logout' %}" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Sai husi sistema</a>
+  </div>
+</nav>
+
+<main>
+
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}ok{% else %}bad{% endif %}" role="alert">
+      <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+      <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="head" data-reveal>
+    <div>
+      <h1>Dashboard</h1>
+      <p>Haree sumáriu estudante no jere dadus iha fatin ida deit.</p>
+    </div>
+    <a href="{% url 'rejistu_estudante' %}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Rejistu estudante</a>
+  </div>
+
+  <!-- KPI -->
+  <section class="kpis" aria-label="Sumáriu estudante">
+    <div class="card kpi" data-reveal>
+      <div class="ico total"><i class="fa-solid fa-users"></i></div>
+      <div><p class="lab">Total estudante</p><p class="num" id="kpi-total" data-count="{{ total_estudante|default:0 }}">{{ total_estudante|default:0 }}</p><p class="cap">Estudante rejistradu hotu</p></div>
+    </div>
+    <div class="card kpi" data-reveal>
+      <div class="ico feto"><i class="fa-solid fa-venus"></i></div>
+      <div><p class="lab">Feto</p><p class="num" id="kpi-feto" data-count="{{ total_feto|default:0 }}">{{ total_feto|default:0 }}</p><p class="cap"><span data-share="feto">–</span> husi total</p></div>
+    </div>
+    <div class="card kpi" data-reveal>
+      <div class="ico mane"><i class="fa-solid fa-mars"></i></div>
+      <div><p class="lab">Mane</p><p class="num" id="kpi-mane" data-count="{{ total_mane|default:0 }}">{{ total_mane|default:0 }}</p><p class="cap"><span data-share="mane">–</span> husi total</p></div>
+    </div>
+  </section>
+
+  <!-- CHARTS -->
+  <section class="charts" aria-label="Grafiku estudante">
+    <div class="card chart-card" data-reveal id="card-gender">
+      <div class="ch-head">
+        <div><h2>Estudante tuir jeneru</h2><p>Feto no mane husi estudante hotu.</p></div>
+      </div>
+      <div class="donut">
+        <div class="donut-box">
+          <canvas id="chart-gender" role="img" aria-label="Grafiku donut estudante tuir jeneru"></canvas>
+          <div class="donut-center"><b id="donut-total">{{ total_estudante|default:0 }}</b><span>estudante</span></div>
         </div>
-    </nav>
+        <ul class="lg">
+          <li><div><i style="--c:var(--mane)"></i>Mane</div><span><b>{{ total_mane|default:0 }}</b><em data-share="mane">–</em></span></li>
+          <li><div><i style="--c:var(--feto)"></i>Feto</div><span><b>{{ total_feto|default:0 }}</b><em data-share="feto">–</em></span></li>
+        </ul>
+      </div>
+    </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {% if messages %}
-            {% for message in messages %}
-            <div class="mb-6 p-4 rounded-xl flex items-center shadow-sm border 
-                {% if message.tags == 'success' %}bg-emerald-50 border-emerald-100 text-emerald-700{% else %}bg-red-50 border-red-100 text-red-700{% endif %}">
-                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %} mr-3 text-lg"></i>
-                <span class="font-medium">{{ message }}</span>
-            </div>
-            {% endfor %}
+    <div class="card chart-card" data-reveal id="card-dept">
+      <div class="ch-head">
+        <div><h2>Estudante tuir departamentu</h2><p>Mane no feto iha departamentu ida-idak.</p></div>
+        <div class="legend"><span style="--c:var(--mane)">Mane</span><span style="--c:var(--feto)">Feto</span></div>
+      </div>
+      <div class="xscroll" id="bar-box"><div class="xin" id="dept-inner"><canvas id="chart-dept" role="img" aria-label="Grafiku bar estudante tuir departamentu"></canvas></div></div>
+      <div class="empty-mini hidden" id="dept-empty" hidden><div><i class="fa-solid fa-chart-simple"></i>Seidauk iha dadus departamentu atu hatudu. Rejistu estudante ho departamentu atu haree grafiku ne’e.</div></div>
+    </div>
+  </section>
+  {{ departamentu_stats|json_script:"dept-data" }}
+
+  <!-- MUNISIPIU -->
+  <section class="charts flip" aria-label="Grafiku munisipiu">
+    <div class="card chart-card" data-reveal id="card-mun">
+      <div class="ch-head">
+        <div><h2>Estudante tuir munisipiu</h2><p>Total estudante husi munisipiu ida-idak, husi barak ba uitoan.</p></div>
+      </div>
+      <div class="bar-box" id="mun-box"><canvas id="chart-mun" role="img" aria-label="Grafiku bar estudante tuir munisipiu"></canvas></div>
+      <div class="empty-mini" id="mun-empty" hidden><div><i class="fa-solid fa-location-dot"></i>Seidauk iha dadus munisipiu atu hatudu. Rejistu estudante ho munisipiu atu haree grafiku ne’e.</div></div>
+    </div>
+
+    <div class="card chart-card" data-reveal id="card-top">
+      <div class="ch-head">
+        <div><h2>Munisipiu ho estudante barak liu</h2><p>Munisipiu 5 liu husi total estudante.</p></div>
+      </div>
+      <div class="donut" id="top-wrap">
+        <div class="donut-box">
+          <canvas id="chart-top" role="img" aria-label="Grafiku donut munisipiu 5 ho estudante barak liu"></canvas>
+          <div class="donut-center"><b id="mun-count">0</b><span>munisipiu</span></div>
+        </div>
+        <ul class="lg" id="top-list"></ul>
+      </div>
+      <div class="empty-mini" id="top-empty" hidden><div><i class="fa-solid fa-chart-pie"></i>Seidauk iha dadus atu hatudu.</div></div>
+    </div>
+  </section>
+  {{ munisipiu_stats|json_script:"mun-data" }}
+
+  <!-- TABLE -->
+  <section class="card" data-reveal aria-label="Lista estudante">
+    <div class="tbl-head">
+      <div>
+        <h2>Lista estudante</h2>
+        <p class="sum">{% if request.GET.search %}{{ estudante.paginator.count }} rezultadu ba “{{ request.GET.search }}”{% else %}{{ estudante.paginator.count }} estudante{% endif %}</p>
+      </div>
+      <div class="tools">
+        <form method="GET" action="{% url 'dashboard' %}" class="search" role="search">
+          <label for="search" class="sr">Buka estudante</label>
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="search" name="search" value="{{ request.GET.search }}" placeholder="Buka husi naran estudante...">
+        </form>
+        {% if request.GET.search %}<a class="clear" href="{% url 'dashboard' %}">Hamoos pesquiza</a>{% endif %}
+        {% comment %} Ganti URL 'print_todos_kartaun' sesuai nama path di urls.py Anda {% endcomment %}
+        <a href="{% url 'print_todos_kartaun' %}{% if request.GET.search %}?search={{ request.GET.search|urlencode }}{% endif %}" target="_blank" rel="noopener" class="btn btn-sm btn-soft">
+          <i class="fa-solid fa-print"></i> Print kartaun
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="c">Nu.</th>
+            <th>Naran kompletu</th>
+            <th>Departamentu</th>
+            <th class="hide-sm">Data moris</th>
+            <th class="c">Jeneru</th>
+            <th class="hide-sm">Eskola anterior</th>
+            <th class="c">Foto</th>
+            <th class="c">Asaun</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for est in estudante %}
+          <tr>
+            <td class="c muted">{{ forloop.counter0|add:estudante.start_index }}</td>
+            <td class="name">{{ est.naran }}</td>
+            <td><span class="pill dept">{{ est.departamentu|default:"N/A" }}</span></td>
+            <td class="muted hide-sm">{{ est.data_moris|date:"d M Y" }}</td>
+            <td class="c">
+              {% if est.sexu == 'L' or est.sexu == 'M' %}<span class="pill mane">Mane</span>{% else %}<span class="pill feto">Feto</span>{% endif %}
+            </td>
+            <td class="muted hide-sm">{{ est.eskola_anterior }}</td>
+            <td>
+              {% if est.foto %}<img src="{{ est.foto.url }}" alt="Foto {{ est.naran }}" class="ava" loading="lazy">
+              {% else %}<div class="ava-ph" aria-label="Seidauk iha foto"><i class="fa-solid fa-user"></i></div>{% endif %}
+            </td>
+            <td>
+              <div class="acts">
+                {% if est.pk %}<a href="{% url 'kartaun_estudante' est.pk %}" class="act view" title="Haree kartaun" aria-label="Haree kartaun {{ est.naran }}"><i class="fa-solid fa-id-card"></i></a>{% endif %}
+                <a href="{% url 'edit_estudante' est.id %}" class="act edit" title="Edita dadus" aria-label="Edita dadus {{ est.naran }}"><i class="fa-solid fa-pen-to-square"></i></a>
+                <a href="{% url 'delete_estudante' est.id %}" class="act del" title="Hamoos dadus" aria-label="Hamoos dadus {{ est.naran }}"
+                   onclick="return confirm('Hamoos dadus {{ est.naran|escapejs }}? Dadus ne’e sei lakon no la bele hetan fali.')"><i class="fa-solid fa-trash"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="empty">
+                {% if request.GET.search %}
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <h3>La hetan estudante ho naran “{{ request.GET.search }}”</h3>
+                  <p>Verifika hakerek naran, ka koko naran seluk.</p>
+                  <a href="{% url 'dashboard' %}" class="btn btn-sm btn-soft">Hamoos pesquiza</a>
+                {% else %}
+                  <i class="fa-solid fa-folder-open"></i>
+                  <h3>Seidauk iha estudante</h3>
+                  <p>Rejistu estudante primeiru atu dadus sira hatudu iha ne’e.</p>
+                  <a href="{% url 'rejistu_estudante' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Rejistu estudante</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if estudante.has_other_pages %}
+    <div class="pager">
+      <p class="sum">Hatudu {{ estudante.start_index }}–{{ estudante.end_index }} husi {{ estudante.paginator.count }} estudante</p>
+      <nav class="pages" aria-label="Pájina">
+        {% if estudante.has_previous %}
+          <a class="pg" href="?page={{ estudante.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}" aria-label="Pájina anterior"><i class="fa-solid fa-chevron-left"></i></a>
         {% endif %}
+        {% for num in estudante.paginator.page_range %}
+          {% if estudante.number == num %}
+            <span class="pg on" aria-current="page">{{ num }}</span>
+          {% elif num > estudante.number|add:'-3' and num < estudante.number|add:'3' %}
+            <a class="pg" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if estudante.has_next %}
+          <a class="pg" href="?page={{ estudante.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}" aria-label="Pájina tuir mai"><i class="fa-solid fa-chevron-right"></i></a>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+  </section>
 
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Dashboard Visualizasaun</h1>
-                <p class="text-gray-500 text-sm">Monitoriza no jere dadus estudante sira nian.</p>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <a href="{% url 'rejistu_estudante' %}" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center no-underline">
-                    <i class="fa-solid fa-user-plus mr-2"></i> REJISTU ESTUDANTE
-                </a>
-            </div>
-        </div>
+  <footer><p>&copy; 2026 SRE - Sistema Rejistrasaun Estudante.</p></footer>
+</main>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-xl bg-blue-100 text-blue-600"><i class="fa-solid fa-users text-2xl"></i></div>
-                    <div class="ml-4">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Estudante</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ total_estudante }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-xl bg-pink-100 text-pink-600"><i class="fa-solid fa-venus text-2xl"></i></div>
-                    <div class="ml-4">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Feto</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ total_feto }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-xl bg-emerald-100 text-emerald-600"><i class="fa-solid fa-mars text-2xl"></i></div>
-                    <div class="ml-4">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Mane</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ total_mane }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motion = !reduce && window.gsap && window.ScrollTrigger;
+if (!motion) document.documentElement.classList.remove('has-motion');
+if (motion) gsap.registerPlugin(ScrollTrigger);
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <!-- Header Tabel: Judul, Tombol Print Semua, dan Pencarian -->
-            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-3">
-                    <h3 class="text-lg font-bold text-gray-800">Lista Detallu Estudante</h3>
-                    {% comment %} Ganti URL 'print_todos_kartaun' sesuai nama path di urls.py Anda {% endcomment %}
-                    <a href="{% url 'print_todos_kartaun' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}" 
-                       target="_blank"
-                       class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                        <i class="fa-solid fa-print"></i> Print Kartaun
-                    </a>
-                </div>
+const $ = (id) => document.getElementById(id);
+const total = +$('kpi-total').dataset.count || 0;
+const mane = +$('kpi-mane').dataset.count || 0;
+const feto = +$('kpi-feto').dataset.count || 0;
+const pct = (n) => (total ? Math.round((n / total) * 100) + '%' : '0%');
+document.querySelectorAll('[data-share]').forEach((el) => { el.textContent = pct(el.dataset.share === 'mane' ? mane : feto); });
 
-                <form method="GET" action="{% url 'dashboard' %}" class="relative w-full md:w-80">
-                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Buka Naran Estudante..." 
-                           class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
-                    <div class="absolute left-3 top-2.5 text-gray-400">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-                        <tr>
-                            <th class="px-6 py-4 border-b border-gray-100 text-center">Nu.</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Naran Kompletu</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Departamentu</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Data Moris</th>
-                            <th class="px-6 py-4 border-b border-gray-100 text-center">Sexu</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Eskola Anterior</th>
-                            <th class="px-6 py-4 border-b border-gray-100 text-center">Foto</th>
-                            <th class="px-6 py-4 border-b border-gray-100 text-center">Asaun</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        {% for est in estudante %}
-                        <tr class="hover:bg-blue-50/40 transition-colors group text-sm">
-                            <td class="px-6 py-4 text-center text-gray-400 font-medium">{{ forloop.counter0|add:estudante.start_index }}</td>
-                            <td class="px-6 py-4 font-bold text-gray-800">{{ est.naran }}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-bold border border-blue-100">
-                                    {{ est.departamentu|default:"N/A" }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-gray-600">{{ est.data_moris|date:"d M Y" }}</td>
-                            <td class="px-6 py-4 text-center">
-                                {% if est.sexu == 'L' or est.sexu == 'M' %}
-                                    <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase">Mane</span>
-                                {% else %}
-                                    <span class="px-2.5 py-1 rounded-md bg-pink-100 text-pink-700 text-[10px] font-bold uppercase">Feto</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 text-gray-600 italic">{{ est.eskola_anterior }}</td>
-                            <td class="px-6 py-4">
-                                <div class="flex justify-center">
-                                    {% if est.foto %}
-                                        <img src="{{ est.foto.url }}" 
-                                             class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all">
-                                    {% else %}
-                                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border-2 border-white shadow-sm">
-                                            <i class="fa-solid fa-user"></i>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex justify-center space-x-2">
-                                    {% if est.pk %}
-                                    <a href="{% url 'kartaun_estudante' est.pk %}" 
-                                       title="Haree Kartaun"
-                                       class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all border border-blue-100">
-                                        <i class="fa-solid fa-id-card"></i>
-                                    </a>
-                                    {% endif %}
-                                    <a href="{% url 'edit_estudante' est.id %}" 
-                                       title="Edita Dadus"
-                                       class="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-500 hover:text-white transition-all border border-amber-100">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </a>
-                                    <a href="{% url 'delete_estudante' est.id %}" 
-                                       title="Hamoos Dadus"
-                                       onclick="return confirm('Ita boot hakarak hamoos dadus husi {{ est.naran }}?')" 
-                                       class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all border border-red-100">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="px-6 py-20 text-center">
-                                <div class="flex flex-col items-center">
-                                    <i class="fa-solid fa-folder-open text-6xl text-gray-200 mb-4"></i>
-                                    <p class="text-gray-400 font-medium text-lg">Dadus Mamuk.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+/* ---------- Motion: one reveal system + KPI count-up ---------- */
+if (motion) {
+  gsap.set('[data-reveal]', { autoAlpha: 0, y: 24 });
+  ScrollTrigger.batch('[data-reveal]', {
+    start: 'top 90%', once: true,
+    onEnter: (els) => gsap.to(els, { autoAlpha: 1, y: 0, duration: .85, ease: 'power4.out', stagger: .07 }),
+  });
+  document.querySelectorAll('[data-count]').forEach((el) => {
+    const end = +el.dataset.count || 0, o = { v: 0 };
+    ScrollTrigger.create({
+      trigger: el, start: 'top 92%', once: true,
+      onEnter: () => gsap.to(o, { v: end, duration: 1.2, ease: 'power3.out', onUpdate: () => { el.textContent = Math.round(o.v).toLocaleString(); } }),
+    });
+  });
+}
 
-            {% if estudante.has_other_pages %}
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                <div class="text-xs text-gray-500 font-medium">
-                    Hamosu {{ estudante.start_index }} to'o {{ estudante.end_index }} husi {{ total_estudante }} dadus
-                </div>
-                <div class="flex space-x-1">
-                    {% if estudante.has_previous %}
-                        <a href="?page={{ estudante.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                           class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </a>
-                    {% endif %}
+/* ---------- Charts: built when their card enters the viewport ---------- */
+const C = { mane: '#1e4fd8', feto: '#f08a24', grid: '#e7ebf3', muted: '#566074' };
+if (window.Chart) {
+  Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+  Chart.defaults.color = C.muted;
+}
+const anim = reduce ? false : { duration: 1100, easing: 'easeOutQuart' };
+const once = (el, fn) => {
+  if (!window.Chart) return;
+  if (motion) ScrollTrigger.create({ trigger: el, start: 'top 88%', once: true, onEnter: fn });
+  else fn();
+};
 
-                    {% for num in estudante.paginator.page_range %}
-                        {% if estudante.number == num %}
-                            <span class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold border border-blue-600 shadow-md">{{ num }}</span>
-                        {% elif num > estudante.number|add:'-3' and num < estudante.number|add:'3' %}
-                            <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all">{{ num }}</a>
-                        {% endif %}
-                    {% endfor %}
+// 1) Jeneru: doughnut
+once($('card-gender'), () => {
+  $('chart-gender').setAttribute('aria-label', `Estudante tuir jeneru: ${mane} mane (${pct(mane)}), ${feto} feto (${pct(feto)}).`);
+  new Chart($('chart-gender'), {
+    type: 'doughnut',
+    data: { labels: ['Mane', 'Feto'], datasets: [{ data: total ? [mane, feto] : [1], backgroundColor: total ? [C.mane, C.feto] : ['#e7ebf3'], borderWidth: 0, spacing: total ? 3 : 0, borderRadius: total ? 6 : 0 }] },
+    options: { cutout: '74%', responsive: true, maintainAspectRatio: true, animation: anim,
+      plugins: { legend: { display: false }, tooltip: { enabled: !!total } } },
+  });
+});
 
-                    {% if estudante.has_next %}
-                        <a href="?page={{ estudante.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                           class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
+// Shared helpers
+const parse = (id) => { try { const d = JSON.parse($(id).textContent || '[]'); return Array.isArray(d) ? d : []; } catch (e) { return []; } };
+const wrapLabel = (str, n = 12) => {
+  const out = []; let line = '';
+  String(str).split(' ').forEach((w) => {
+    if (line && (line + ' ' + w).length > n) { out.push(line); line = w; } else { line = (line + ' ' + w).trim(); }
+  });
+  if (line) out.push(line);
+  return out;
+};
+// Draws the number at the end of each bar (works for vertical and horizontal bars)
+const valueLabels = {
+  id: 'valueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart, horizontal = chart.options.indexAxis === 'y';
+    ctx.save();
+    ctx.font = '600 11px ' + Chart.defaults.font.family;
+    ctx.fillStyle = C.muted;
+    chart.data.datasets.forEach((ds, di) => {
+      if (!chart.isDatasetVisible(di)) return;
+      chart.getDatasetMeta(di).data.forEach((bar, i) => {
+        const v = ds.data[i]; if (!v) return;
+        if (horizontal) { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(v, bar.x + 6, bar.y); }
+        else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(v, bar.x, bar.y - 4); }
+      });
+    });
+    ctx.restore();
+  },
+};
 
-        <footer class="mt-12 text-center text-gray-400 text-sm">
-            <p>&copy; 2026 SRE - Sistema Rejistrasaun Estudante.</p>
-        </footer>
-    </main>
+// 2) Departamentu: vertical bar chart, mane and feto side by side
+const dept = parse('dept-data');
+if (!dept.length) {
+  $('bar-box').hidden = true; $('dept-empty').hidden = false;
+  document.querySelector('#card-dept .legend').hidden = true;
+} else {
+  once($('card-dept'), () => {
+    $('dept-inner').style.minWidth = dept.length * 92 + 'px';   // scrolls sideways on small screens
+    $('chart-dept').setAttribute('aria-label', 'Estudante tuir departamentu: ' +
+      dept.map((d) => `${d.departamentu || 'N/A'} ${(+d.mane || 0) + (+d.feto || 0)}`).join(', ') + '.');
+    new Chart($('chart-dept'), {
+      type: 'bar',
+      data: { labels: dept.map((d) => d.departamentu || 'N/A'), datasets: [
+        { label: 'Mane', data: dept.map((d) => +d.mane || 0), backgroundColor: C.mane, borderRadius: 6, borderSkipped: false },
+        { label: 'Feto', data: dept.map((d) => +d.feto || 0), backgroundColor: C.feto, borderRadius: 6, borderSkipped: false },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, animation: anim,
+        interaction: { mode: 'index', intersect: false },
+        datasets: { bar: { categoryPercentage: .72, barPercentage: .92 } },
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { footer: (items) => 'Total: ' + items.reduce((t, i) => t + i.parsed.y, 0) } } },
+        scales: {
+          x: { grid: { display: false }, border: { display: false },
+               ticks: { autoSkip: false, maxRotation: 0, callback(v) { return wrapLabel(this.getLabelForValue(v)); } } },
+          y: { beginAtZero: true, grace: '12%', ticks: { precision: 0 }, grid: { color: C.grid }, border: { display: false } },
+        } },
+      plugins: [valueLabels],
+    });
+  });
+}
+
+// 3) Munisipiu: total per munisipiu (horizontal bar) + top 5 share (doughnut)
+const mun = parse('mun-data')
+  .map((d) => ({ name: d.munisipiu || 'N/A', total: +d.total || 0 }))
+  .filter((d) => d.total > 0)
+  .sort((a, b) => b.total - a.total);
+const munTotal = mun.reduce((t, d) => t + d.total, 0);
+const share = (n) => (munTotal ? Math.round((n / munTotal) * 100) + '%' : '0%');
+
+if (!mun.length) {
+  $('mun-box').hidden = true; $('mun-empty').hidden = false;
+  $('top-wrap').hidden = true; $('top-empty').hidden = false;
+} else {
+  const MUN = '#0f9d8a';
+  once($('card-mun'), () => {
+    $('mun-box').style.height = Math.max(260, mun.length * 36 + 50) + 'px';
+    $('chart-mun').setAttribute('aria-label', 'Estudante tuir munisipiu: ' + mun.map((d) => `${d.name} ${d.total}`).join(', ') + '.');
+    new Chart($('chart-mun'), {
+      type: 'bar',
+      data: { labels: mun.map((d) => d.name), datasets: [{ label: 'Estudante', data: mun.map((d) => d.total), backgroundColor: MUN, borderRadius: 6, borderSkipped: false }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: anim, barThickness: 18,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: (c) => ` ${c.parsed.x} estudante (${share(c.parsed.x)})` } } },
+        scales: {
+          x: { beginAtZero: true, grace: '10%', ticks: { precision: 0 }, grid: { color: C.grid }, border: { display: false } },
+          y: { grid: { display: false }, border: { display: false } },
+        } },
+      plugins: [valueLabels],
+    });
+  });
+
+  // Top 5 + "Seluk" (everything else)
+  const PAL = ['#0e1a3b', '#0f9d8a', '#d9a21b', '#7a5af8', '#d1465d'], OTHER = '#c6cddb';
+  const rows = mun.slice(0, 5).map((d, i) => ({ name: d.name, v: d.total, c: PAL[i] }));
+  const rest = mun.slice(5);
+  if (rest.length) rows.push({ name: `Seluk (${rest.length} munisipiu)`, v: rest.reduce((t, d) => t + d.total, 0), c: OTHER });
+
+  $('mun-count').textContent = mun.length;
+  const list = $('top-list');
+  rows.forEach((r) => {
+    const li = document.createElement('li'), left = document.createElement('div'), sw = document.createElement('i');
+    const right = document.createElement('span'), b = document.createElement('b'), em = document.createElement('em');
+    sw.style.setProperty('--c', r.c);
+    left.append(sw, document.createTextNode(r.name));
+    b.textContent = r.v; em.textContent = share(r.v);
+    right.append(b, em); li.append(left, right); list.append(li);
+  });
+
+  once($('card-top'), () => {
+    $('chart-top').setAttribute('aria-label', 'Munisipiu ho estudante barak liu: ' + rows.map((r) => `${r.name} ${share(r.v)}`).join(', ') + '.');
+    new Chart($('chart-top'), {
+      type: 'doughnut',
+      data: { labels: rows.map((r) => r.name), datasets: [{ data: rows.map((r) => r.v), backgroundColor: rows.map((r) => r.c), borderWidth: 0, spacing: 3, borderRadius: 6 }] },
+      options: { cutout: '74%', responsive: true, maintainAspectRatio: true, animation: anim,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.parsed} (${share(c.parsed)})` } } } },
+    });
+  });
+}
+
+if (motion) addEventListener('load', () => ScrollTrigger.refresh());
+</script>
 </body>
 </html>

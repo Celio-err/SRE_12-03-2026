@@ -3,230 +3,448 @@
     password:1264
 {% endcomment %}
 <!DOCTYPE html>
-<html lang="id">
+<html lang="tet">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SRE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - SRE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  // Motion is opt-in: content stays visible without JS or with reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('has-motion');
+</script>
+<style>
+:root{
+  --ink:#0b1a36; --paper:#f6f4ee; --card:#fffefb; --line:#e3dfd3;
+  --text:#16213a; --muted:#6a7288; --blue:#2a5bd7; --blue-d:#1f46ad;
+  --amber:#e9b04b; --err:#b4372a;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --serif:'Fraunces',Georgia,serif; --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);color:var(--text);background:var(--paper);min-height:100dvh;-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+svg{display:block}
+
+/* Motion hooks: hidden only while JS motion is active */
+html.has-motion .brand,html.has-motion .motion-line,html.has-motion [data-copy],
+html.has-motion .card,html.has-motion [data-field],html.has-motion [data-layer]{visibility:hidden}
+.motion-line-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
+.motion-line{display:inline-block;will-change:transform,opacity}
+
+/* Layout */
+.stage{min-height:100dvh;display:grid;grid-template-columns:1fr}
+@media(min-width:960px){.stage{grid-template-columns:1.1fr .9fr}}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;isolation:isolate;background:var(--ink);color:#fff;
+  padding:28px 24px 76px;display:flex;flex-direction:column;justify-content:space-between;gap:36px}
+.hero::before{content:"";position:absolute;inset:0;z-index:-3;
+  background:radial-gradient(75% 60% at 18% 8%,#1d3f84 0%,transparent 62%),radial-gradient(60% 50% at 95% 100%,#14305f 0%,transparent 70%),var(--ink)}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.08;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+.layer{position:absolute;pointer-events:none;z-index:-2}
+.rings{right:-26%;top:-6%;width:min(120%,560px);color:#fff}
+.dots{left:6%;bottom:6%;width:120px;color:#fff;opacity:.5;display:none}
+.idpos{right:9%;bottom:11%;width:min(250px,30%);display:none;z-index:0}
+@media(min-width:960px){
+  .hero{padding:48px 56px}
+  .rings{right:-14%;top:4%;width:min(88%,720px)}
+  .dots,.idpos{display:block}
+}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.16em;font-size:.78rem}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--blue);display:grid;place-items:center;font-family:var(--serif);font-size:1rem;letter-spacing:0}
+.copy h1{font-family:var(--serif);font-weight:400;font-size:clamp(2rem,4.6vw,3.9rem);line-height:1.04;letter-spacing:-.02em;max-width:12em}
+.copy h1 em{font-style:italic;color:var(--amber)}
+.copy p{margin-top:20px;max-width:30em;font-size:.95rem;line-height:1.65;color:rgba(255,255,255,.66);display:none}
+.meta{display:none;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+@media(min-width:960px){.copy p,.meta{display:block}}
+@media(max-width:959px){.hero{gap:22px}.copy h1 .motion-line-mask{margin-right:.25em}}
+@media(min-width:960px){.copy h1 .motion-line-mask{display:block}}
+
+/* Student ID mock (echoes the QR login) */
+.idcard{transform:rotate(-6deg);background:var(--card);color:var(--ink);border-radius:18px;padding:18px;
+  box-shadow:0 40px 70px -28px rgba(0,0,0,.6);display:grid;gap:14px}
+.idcard .row{display:flex;align-items:center;justify-content:space-between}
+.chip{font-size:.6rem;font-weight:700;letter-spacing:.16em;color:var(--blue)}
+.bar{height:8px;border-radius:4px;background:#e6e2d6}
+.idcard svg{width:100%;height:auto;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+
+/* Panel + card */
+.panel{position:relative;display:grid;place-items:center;padding:0 16px 32px;margin-top:-44px}
+@media(min-width:960px){.panel{padding:48px;margin-top:0}}
+.card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:32px 26px;box-shadow:0 34px 60px -34px rgba(11,26,54,.4)}
+@media(min-width:480px){.card{padding:36px 34px}}
+.eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
+.card h2{font-family:var(--serif);font-weight:500;font-size:1.9rem;letter-spacing:-.01em;margin:6px 0 26px}
+.alert{background:#fbeceA;color:var(--err);border:1px solid #f0c9c3;border-radius:12px;padding:10px 14px;font-size:.85rem;margin-bottom:16px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:.8rem;font-weight:600;margin-bottom:7px}
+.control{position:relative}
+.control>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#9aa0b1;pointer-events:none;transition:color .25s}
+.control:focus-within>svg{color:var(--blue)}
+.control input{width:100%;height:50px;padding:0 46px 0 44px;font:inherit;font-size:.95rem;color:var(--text);
+  background:#fff;border:1px solid var(--line);border-radius:12px;outline:none;transition:border-color .25s,box-shadow .25s}
+.control input::placeholder{color:#a8adbc}
+.control input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(42,91,215,.14)}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:42px;display:grid;place-items:center;
+  background:none;border:0;border-radius:10px;color:#9aa0b1;cursor:pointer;transition:color .25s}
+.eye:hover,.eye:focus-visible{color:var(--blue)}
+.eye:focus-visible,.link:focus-visible,.btn:focus-visible,.close:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.eye svg{width:18px;height:18px}
+.link{font-size:.8rem;font-weight:600;color:var(--blue);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .4s var(--ease)}
+.link:hover{background-size:100% 1px}
+.btn{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-size:.9rem;font-weight:700;
+  border-radius:14px;cursor:pointer;transition:background .3s,border-color .3s,transform .2s}
+.btn svg{width:18px;height:18px;transition:transform .45s var(--ease)}
+.btn:active{transform:scale(.98)}
+.primary{margin-top:22px;color:#fff;background:var(--ink);border:0;letter-spacing:.04em}
+.primary:hover{background:var(--blue-d)}
+.primary:hover svg{transform:translateX(6px)}
+.ghost{color:var(--text);background:transparent;border:1px solid var(--line)}
+.ghost:hover{background:#f3f0e7;border-color:#d6d1c2}
+.ghost svg{color:var(--blue)}
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#a0a5b5}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.credit{margin-top:26px;text-align:center;font-size:.72rem;color:#9aa0b1}
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.close{width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:#8b91a3;cursor:pointer}
+.close:hover{background:#f3f0e7;color:var(--text)}
+.close svg{width:18px;height:18px}
+
+/* QR scanner */
+.qr-frame{position:relative;width:100%;max-width:300px;aspect-ratio:1;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--ink)}
+#qr-reader{width:100%;height:100%;border:0!important}
+#qr-reader video{object-fit:cover}
+.corner{position:absolute;width:26px;height:26px;border:3px solid var(--amber);z-index:2;pointer-events:none}
+.corner.tl{top:14px;left:14px;border-right:0;border-bottom:0;border-top-left-radius:8px}
+.corner.tr{top:14px;right:14px;border-left:0;border-bottom:0;border-top-right-radius:8px}
+.corner.bl{bottom:14px;left:14px;border-right:0;border-top:0;border-bottom-left-radius:8px}
+.corner.br{bottom:14px;right:14px;border-left:0;border-top:0;border-bottom-right-radius:8px}
+.scan{position:absolute;inset:0;z-index:2;pointer-events:none;transform:translateY(-88%);animation:scan 2.8s ease-in-out infinite alternate}
+.scan::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+@keyframes scan{to{transform:translateY(-12%)}}
+.qr-hint{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:18px}
+#qr-status{margin:16px 0 22px;text-align:center;font-size:.78rem;color:var(--muted);min-height:1.2em}
+
+@media(prefers-reduced-motion:reduce){.scan{animation:none;transform:translateY(-50%)}*{transition-duration:.01ms!important}}
+</style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-3 sm:p-4">
+<body>
+<main class="stage" data-mouse-parallax>
 
-    <div class="max-w-md w-full">
-        <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight">SR-ESTUDANTE</h1>
-            <p class="text-gray-500 mt-2 text-xs sm:text-sm uppercase tracking-widest font-medium px-2">Sistema Rejistrasaun Estudante</p>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="layer rings" data-layer aria-hidden="true">
+      <div data-mouse-depth="0.02">
+        <svg viewBox="0 0 400 400" fill="none" stroke="currentColor" stroke-opacity=".09">
+          <circle cx="200" cy="200" r="60"/><circle cx="200" cy="200" r="100"/>
+          <circle cx="200" cy="200" r="140"/><circle cx="200" cy="200" r="180"/><circle cx="200" cy="200" r="198"/>
+          <path d="M200 20a180 180 0 0 1 180 180" stroke="#e9b04b" stroke-opacity=".85" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="layer dots" data-layer aria-hidden="true">
+      <div data-mouse-depth="0.035">
+        <svg viewBox="0 0 120 120" fill="currentColor">
+          <g id="dotgrid"></g>
+        </svg>
+      </div>
+    </div>
+    <div class="layer idpos" data-layer aria-hidden="true">
+      <div data-mouse-depth="0.055">
+        <div class="idcard">
+          <div class="row"><span class="chip">SRE · ID</span><span class="bar" style="width:34px"></span></div>
+          <svg viewBox="0 0 17 17" shape-rendering="crispEdges" data-miniqr></svg>
+          <div class="bar" style="width:72%"></div>
+          <div class="bar" style="width:46%"></div>
         </div>
-
-        <!-- CARD LOGIN (FORM BIASA) -->
-        <div id="login-card" class="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
-            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-5 sm:mb-6 text-center">LOGIN</h2>
-            
-            <form action="{% url 'index' %}" method="POST" class="space-y-5">
-                <div>
-                    <label for="username" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Username</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-user text-gray-400"></i>
-                        </div>
-                        {% csrf_token %}
-                        <input type="text" id="username" name="username" required
-                            class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm"
-                            placeholder="Username...">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-lock text-gray-400"></i>
-                        </div>
-                        <input type="password" id="password" name="password" required
-                            class="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm"
-                            placeholder="Password...">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onclick="togglePassword()">
-                            <i id="eye-icon" class="fa-solid fa-eye text-gray-400 hover:text-blue-500 transition-colors"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between mt-2">
-                    <div class="text-xs">
-                        <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Haluha password</a>
-                    </div>
-                </div>
-
-                <button type="submit" 
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-200 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all active:scale-95 mt-4">
-                    LOGIN AGORA
-                </button>
-            </form>
-
-            <!-- Divider -->
-            <div class="flex items-center my-6">
-                <div class="flex-grow border-t border-gray-200"></div>
-                <span class="mx-3 text-xs text-gray-400 uppercase font-medium">atau</span>
-                <div class="flex-grow border-t border-gray-200"></div>
-            </div>
-
-            <!-- Tombol buka Scan QR -->
-            <button type="button" onclick="showQrCard()"
-                class="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95">
-                <i class="fa-solid fa-qrcode text-blue-600"></i>
-                Login husi QRCode
-            </button>
-
-            <p class="mt-8 text-center text-xs text-gray-400">
-                &copy; Dezenvolve husi Celio Sousa Silva
-            </p>
-        </div>
-
-        <!-- CARD SCAN QR (tersembunyi awalnya) -->
-        <div id="qr-card" class="hidden bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
-            <div class="flex items-center justify-between mb-5 sm:mb-6">
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800">SCAN QR</h2>
-                <button type="button" onclick="hideQrCard()" class="text-gray-400 hover:text-gray-600 p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <p class="text-xs sm:text-sm text-gray-500 mb-4 text-center">
-                Se QRCode ba Kamara hodi Scan
-            </p>
-
-            <!-- Wrapper untuk kamera QR: dibatasi lebar & rasio persegi agar rapi di semua layar -->
-            <div class="rounded-2xl overflow-hidden border-2 border-dashed border-blue-200 bg-gray-50 w-full max-w-[280px] sm:max-w-[320px] aspect-square mx-auto">
-                <div id="qr-reader" class="w-full h-full"></div>
-            </div>
-
-            <p id="qr-status" class="mt-4 text-center text-xs text-gray-400 px-2">
-                Menunggu izin kamera...
-            </p>
-
-            <button type="button" onclick="showLoginCard()"
-                class="w-full mt-5 sm:mt-6 flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95">
-                <i class="fa-solid fa-arrow-left"></i>
-                Fila
-            </button>
-        </div>
-
+      </div>
     </div>
 
-    <!-- Form tersembunyi untuk submit hasil scan QR ke server -->
-    <form id="qr-login-form" action="{% url 'index' %}" method="POST" class="hidden">
-        {% csrf_token %}
-        <input type="hidden" name="qr_token" id="qr_token_input">
-    </form>
+    <div class="brand"><span class="mark">S</span>SR-ESTUDANTE</div>
 
-    <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eye-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-            }
-        }
+    <div class="copy">
+      <h1 aria-label="Rejistrasaun estudante, simples no seguru.">
+        <span class="motion-line-mask" aria-hidden="true"><span class="motion-line">Rejistrasaun</span></span>
+        <span class="motion-line-mask" aria-hidden="true"><span class="motion-line">estudante,</span></span>
+        <span class="motion-line-mask" aria-hidden="true"><span class="motion-line"><em>simples</em> no seguru.</span></span>
+      </h1>
+      <p data-copy>Tama atu jere dadus estudante no kartaun ID iha fatin ida deit. Uza username ka scan QRCode hodi tama lalais.</p>
+    </div>
 
-        let html5QrCode = null;
+    <div class="meta" data-copy>Sistema Rejistrasaun Estudante</div>
+  </section>
 
-        function showQrCard() {
-            document.getElementById('login-card').classList.add('hidden');
-            document.getElementById('qr-card').classList.remove('hidden');
-            startQrScanner();
-        }
+  <!-- PANEL -->
+  <section class="panel">
+    <div class="card">
 
-        function showLoginCard() {
-            stopQrScanner();
-            document.getElementById('qr-card').classList.add('hidden');
-            document.getElementById('login-card').classList.remove('hidden');
-        }
+      <!-- CARD LOGIN -->
+      <div id="login-card">
+        <div class="eyebrow" data-field>Bem-vindu fila fali</div>
+        <h2 data-field>Login</h2>
 
-        function hideQrCard() {
-            showLoginCard();
-        }
+        {% if messages %}<div class="alert" role="alert">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
 
-        // Menghitung ukuran qrbox secara dinamis mengikuti lebar container (responsif)
-        function getQrBoxSize() {
-            const container = document.getElementById('qr-reader');
-            const w = container ? container.clientWidth : 250;
-            const size = Math.floor(Math.min(w, 280) * 0.7);
-            return { width: size, height: size };
-        }
+        <form action="{% url 'index' %}" method="POST">
+          {% csrf_token %}
+          <div class="field" data-field>
+            <label for="username">Username</label>
+            <div class="control">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+              <input type="text" id="username" name="username" required autocomplete="username" placeholder="Username...">
+            </div>
+          </div>
 
-        function onScanSuccess(decodedText) {
-            const statusEl = document.getElementById('qr-status');
-            statusEl.textContent = "QR terdeteksi, memproses login...";
-            // Isi token hasil scan lalu submit form ke server
-            document.getElementById('qr_token_input').value = decodedText;
-            stopQrScanner();
-            document.getElementById('qr-login-form').submit();
-        }
+          <div class="field" data-field>
+            <label for="password">Password</label>
+            <div class="control">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password...">
+              <button type="button" class="eye" onclick="togglePassword()" aria-label="Hatudu password" aria-pressed="false">
+                <svg id="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg id="eye-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.6 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+              </button>
+            </div>
+          </div>
 
-        function onScanFailure(errorMessage) {
-            // Frame tanpa QR, diabaikan (dipanggil berulang kali secara normal)
-        }
+          <div data-field><a href="#" class="link">Haluha password</a></div>
 
-        async function startQrScanner() {
-    const statusEl = document.getElementById('qr-status');
-    html5QrCode = new Html5Qrcode("qr-reader");
-    const config = { fps: 10, qrbox: getQrBoxSize() };
+          <div data-field>
+            <button type="submit" class="btn primary" data-magnetic="0.1">
+              LOGIN AGORA
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </form>
 
-    try {
-        const devices = await Html5Qrcode.getCameras();
+        <div class="divider" data-field>atau</div>
 
-        if (!devices || devices.length === 0) {
-            statusEl.textContent = "Tidak ada kamera yang terdeteksi pada perangkat ini";
-            return;
-        }
+        <div data-field>
+          <button type="button" class="btn ghost" onclick="showQrCard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4"/></svg>
+            Login husi QRCode
+          </button>
+        </div>
 
-        const rearCamera = devices.find((d) =>
-            /back|rear|environment/i.test(d.label)
-        );
+        <p class="credit" data-field>&copy; Dezenvolve husi Celio Sousa Silva</p>
+      </div>
 
-        const cameraId = rearCamera
-            ? rearCamera.id
-            : (devices.length > 1 ? devices[devices.length - 1].id : devices[0].id);
+      <!-- CARD SCAN QR -->
+      <div id="qr-card" class="hidden">
+        <div class="row-between" style="margin-bottom:6px">
+          <div>
+            <div class="eyebrow">Scan</div>
+            <h2 style="margin-bottom:0">QR Code</h2>
+          </div>
+          <button type="button" class="close" onclick="hideQrCard()" aria-label="Taka">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <p class="qr-hint" style="margin-top:14px">Se QRCode ba Kamara hodi Scan</p>
 
-        await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
-        statusEl.textContent = "Kamera aktif, arahkan ke QR code";
-    } catch (err) {
-        console.error("getCameras/start gagal:", err);
-        try {
-            await html5QrCode.start(
-                { facingMode: { ideal: "environment" } },
-                config,
-                onScanSuccess,
-                onScanFailure
-            );
-            statusEl.textContent = "Kamera aktif, arahkan ke QR code";
-        } catch (err2) {
-            console.error("Fallback gagal:", err2);
-            statusEl.textContent = "Gagal: " + (err2?.name || "") + " - " + (err2?.message || err2);
-        }
+        <div class="qr-frame">
+          <div id="qr-reader"></div>
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <span class="scan" aria-hidden="true"></span>
+        </div>
+
+        <p id="qr-status" aria-live="polite">Menunggu izin kamera...</p>
+
+        <button type="button" class="btn ghost" onclick="showLoginCard()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          Fila
+        </button>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- Form tersembunyi untuk submit hasil scan QR ke server -->
+<form id="qr-login-form" action="{% url 'index' %}" method="POST" class="hidden">
+  {% csrf_token %}
+  <input type="hidden" name="qr_token" id="qr_token_input">
+</form>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+const motion = !reduce && !!window.gsap;
+if (!motion) document.documentElement.classList.remove('has-motion');
+
+/* ---------- Decorative: dot grid + mini QR ---------- */
+(function () {
+  const g = document.getElementById('dotgrid');
+  if (g) { let d = ''; for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) d += `<circle cx="${10 + x * 20}" cy="${10 + y * 20}" r="1.6"/>`; g.innerHTML = d; }
+  const q = document.querySelector('[data-miniqr]');
+  if (q) {
+    const n = 17; let s = 7, h = '';
+    const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const finder = [[0, 0], [n - 7, 0], [0, n - 7]];
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const f = finder.find(([a, b]) => x >= a && x < a + 7 && y >= b && y < b + 7);
+      let on;
+      if (f) { const lx = x - f[0], ly = y - f[1]; on = lx % 6 === 0 || ly % 6 === 0 || (lx > 1 && lx < 5 && ly > 1 && ly < 5); }
+      else on = rnd() > .52;
+      if (on) h += `<rect x="${x}" y="${y}" width="1" height="1" fill="currentColor"/>`;
     }
-}
-        
+    q.innerHTML = h;
+  }
+})();
 
-        function stopQrScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    html5QrCode = null;
-                }).catch(() => {
-                    html5QrCode = null;
-                });
-            }
-        }
-    </script>
+/* ---------- Motion: one arrival sequence, calm depth ---------- */
+if (motion) {
+  gsap.defaults({ ease: 'power4.out' });
+  gsap.timeline({ delay: .1 })
+    .fromTo('[data-layer]', { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: 1.1, stagger: .12 })
+    .fromTo('.brand', { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: .8 }, .15)
+    .fromTo('.motion-line', { yPercent: 100, autoAlpha: 0, filter: 'blur(8px)' },
+            { yPercent: 0, autoAlpha: 1, filter: 'blur(0px)', duration: 1, stagger: .11 }, .35)
+    .fromTo('[data-copy]', { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: .85, stagger: .08 }, .85)
+    .fromTo('.card', { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: .95 }, .55)
+    .fromTo('#login-card [data-field]', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: .8, stagger: .075 }, .9);
+}
+
+/* Mouse-reactive depth (pointer: fine only) */
+if (motion && fine) {
+  const stage = document.querySelector('[data-mouse-parallax]');
+  const set = [...stage.querySelectorAll('[data-mouse-depth]')].map((el) => ({
+    d: +el.dataset.mouseDepth,
+    x: gsap.quickTo(el, 'x', { duration: .8, ease: 'power3.out' }),
+    y: gsap.quickTo(el, 'y', { duration: .8, ease: 'power3.out' }),
+  }));
+  stage.addEventListener('pointermove', (e) => {
+    const r = stage.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
+    set.forEach((s) => { s.x(x * s.d); s.y(y * s.d); });
+  });
+  stage.addEventListener('pointerleave', () => set.forEach((s) => { s.x(0); s.y(0); }));
+
+  /* Magnetic primary button, kept subtle */
+  document.querySelectorAll('[data-magnetic]').forEach((el) => {
+    const k = +el.dataset.magnetic || .1;
+    const xTo = gsap.quickTo(el, 'x', { duration: .45, ease: 'power3.out' });
+    const yTo = gsap.quickTo(el, 'y', { duration: .45, ease: 'power3.out' });
+    el.addEventListener('pointermove', (e) => {
+      const r = el.getBoundingClientRect();
+      xTo((e.clientX - r.left - r.width / 2) * k);
+      yTo((e.clientY - r.top - r.height / 2) * k);
+    });
+    el.addEventListener('pointerleave', () => { xTo(0); yTo(0); });
+  });
+}
+
+/* ---------- Password toggle ---------- */
+function togglePassword() {
+  const input = document.getElementById('password');
+  const btn = document.querySelector('.eye');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  document.getElementById('eye-on').classList.toggle('hidden', show);
+  document.getElementById('eye-off').classList.toggle('hidden', !show);
+  btn.setAttribute('aria-pressed', show);
+  btn.setAttribute('aria-label', show ? 'Subar password' : 'Hatudu password');
+}
+
+/* ---------- Login <-> QR card swap ---------- */
+let busy = false;
+function swapCards(from, to, done) {
+  if (busy) return;
+  busy = true;
+  const finish = () => { busy = false; if (done) done(); };
+  if (!motion) { from.classList.add('hidden'); to.classList.remove('hidden'); finish(); return; }
+  gsap.to(from, {
+    autoAlpha: 0, y: -10, duration: .28, ease: 'power3.in',
+    onComplete() {
+      from.classList.add('hidden');
+      to.classList.remove('hidden');
+      gsap.fromTo(to, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: .6, ease: 'power3.out', onComplete: finish });
+    },
+  });
+}
+
+let html5QrCode = null;
+
+function showQrCard() {
+  swapCards(document.getElementById('login-card'), document.getElementById('qr-card'), startQrScanner);
+}
+
+function showLoginCard() {
+  stopQrScanner();
+  swapCards(document.getElementById('qr-card'), document.getElementById('login-card'),
+    () => document.getElementById('username').focus({ preventScroll: true }));
+}
+
+function hideQrCard() { showLoginCard(); }
+
+/* ---------- QR scanner (logic unchanged) ---------- */
+// Menghitung ukuran qrbox secara dinamis mengikuti lebar container (responsif)
+function getQrBoxSize() {
+  const container = document.getElementById('qr-reader');
+  const w = container ? container.clientWidth : 250;
+  const size = Math.floor(Math.min(w, 280) * 0.7);
+  return { width: size, height: size };
+}
+
+function onScanSuccess(decodedText) {
+  document.getElementById('qr-status').textContent = "QR terdeteksi, memproses login...";
+  // Isi token hasil scan lalu submit form ke server
+  document.getElementById('qr_token_input').value = decodedText;
+  stopQrScanner();
+  document.getElementById('qr-login-form').submit();
+}
+
+function onScanFailure() {
+  // Frame tanpa QR, diabaikan (dipanggil berulang kali secara normal)
+}
+
+async function startQrScanner() {
+  const statusEl = document.getElementById('qr-status');
+  html5QrCode = new Html5Qrcode("qr-reader");
+  const config = { fps: 10, qrbox: getQrBoxSize() };
+
+  try {
+    const devices = await Html5Qrcode.getCameras();
+
+    if (!devices || devices.length === 0) {
+      statusEl.textContent = "Tidak ada kamera yang terdeteksi pada perangkat ini";
+      return;
+    }
+
+    const rearCamera = devices.find((d) => /back|rear|environment/i.test(d.label));
+    const cameraId = rearCamera
+      ? rearCamera.id
+      : (devices.length > 1 ? devices[devices.length - 1].id : devices[0].id);
+
+    await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
+    statusEl.textContent = "Kamera aktif, arahkan ke QR code";
+  } catch (err) {
+    console.error("getCameras/start gagal:", err);
+    try {
+      await html5QrCode.start({ facingMode: { ideal: "environment" } }, config, onScanSuccess, onScanFailure);
+      statusEl.textContent = "Kamera aktif, arahkan ke QR code";
+    } catch (err2) {
+      console.error("Fallback gagal:", err2);
+      statusEl.textContent = "Gagal: " + (err2?.name || "") + " - " + (err2?.message || err2);
+    }
+  }
+}
+
+function stopQrScanner() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    }).catch(() => { html5QrCode = null; });
+  }
+}
+</script>
 </body>
 </html>
