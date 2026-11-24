@@ -116,19 +116,31 @@ def delete_estudante(request, pk):
     estudante.delete()
     return redirect('dashboard')
 
-def index(request):
-    return render(request, 'index.html')
+
+def label_map(field_name):
+    """code -> display name, read from the model field's choices.
+    Returns {} when the field has no choices, so raw values are used instead."""
+    return dict(Estudante._meta.get_field(field_name).flatchoices)
+
 
 @never_cache
 @login_required(login_url='index')
 def dashboard(request):
+    dept_labels = label_map('departamentu')
+    mun_labels = label_map('munisipiu')
+
     # ---- Table: newest first, search by name or department ----
     estudante = Estudante.objects.all().order_by('-id')
 
     search_query = (request.GET.get('search') or '').strip()
     if search_query:
+        q = search_query.lower()
+        # also match the display name, not only the stored code
+        dept_codes = [c for c, label in dept_labels.items() if q in str(label).lower()]
         estudante = estudante.filter(
-            Q(naran__icontains=search_query) | Q(departamentu__icontains=search_query)
+            Q(naran__icontains=search_query)
+            | Q(departamentu__icontains=search_query)
+            | Q(departamentu__in=dept_codes)
         )
 
     page_obj = Paginator(estudante, 10).get_page(request.GET.get('page'))
@@ -150,10 +162,11 @@ def dashboard(request):
         )
     )
 
-    # Merge blank/NULL departments into one "N/A" bar
+    # Use display names; merge blank/NULL departments into one "N/A" bar
     merged = {}
     for r in rows:
-        name = (r['departamentu'] or '').strip() or 'N/A'
+        code = r['departamentu']
+        name = str(dept_labels.get(code, code) or '').strip() or 'N/A'
         d = merged.setdefault(name, {'departamentu': name, 'mane': 0, 'feto': 0})
         d['mane'] += r['mane']
         d['feto'] += r['feto']
@@ -171,7 +184,8 @@ def dashboard(request):
 
     merged_mun = {}
     for r in mun_rows:
-        name = (r['munisipiu'] or '').strip() or 'N/A'
+        code = r['munisipiu']
+        name = str(mun_labels.get(code, code) or '').strip() or 'N/A'
         merged_mun[name] = merged_mun.get(name, 0) + r['total']
 
     munisipiu_stats = [

@@ -263,7 +263,6 @@ footer{margin-top:36px;text-align:center;font-size:.8rem;color:var(--faint)}
           <input type="search" id="search" name="search" value="{{ request.GET.search }}" placeholder="Buka husi naran estudante...">
         </form>
         {% if request.GET.search %}<a class="clear" href="{% url 'dashboard' %}">Hamoos pesquiza</a>{% endif %}
-        {% comment %} Ganti URL 'print_todos_kartaun' sesuai nama path di urls.py Anda {% endcomment %}
         <a href="{% url 'print_todos_kartaun' %}{% if request.GET.search %}?search={{ request.GET.search|urlencode }}{% endif %}" target="_blank" rel="noopener" class="btn btn-sm btn-soft">
           <i class="fa-solid fa-print"></i> Print kartaun
         </a>
@@ -289,7 +288,7 @@ footer{margin-top:36px;text-align:center;font-size:.8rem;color:var(--faint)}
           <tr>
             <td class="c muted">{{ forloop.counter0|add:estudante.start_index }}</td>
             <td class="name">{{ est.naran }}</td>
-            <td><span class="pill dept">{{ est.departamentu|default:"N/A" }}</span></td>
+            <td><span class="pill dept">{{ est.get_departamentu_display }}</span></td>
             <td class="muted hide-sm">{{ est.data_moris|date:"d M Y" }}</td>
             <td class="c">
               {% if est.sexu == 'L' or est.sexu == 'M' %}<span class="pill mane">Mane</span>{% else %}<span class="pill feto">Feto</span>{% endif %}
