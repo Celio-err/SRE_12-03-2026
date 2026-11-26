@@ -75,7 +75,7 @@ main{max-width:1240px;margin:0 auto;padding:28px 20px 40px}
 
 /* Charts */
 .charts{display:grid;gap:16px;grid-template-columns:1fr;margin-bottom:16px}
-@media(min-width:1024px){.charts{grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr)}}
+@media(min-width:1024px){.charts{grid-template-columns:minmax(0,.85fr) minmax(0,1.55fr)}}
 .chart-card{padding:22px}
 .ch-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
 .ch-head h2{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
@@ -97,9 +97,9 @@ main{max-width:1240px;margin:0 auto;padding:28px 20px 40px}
 .empty-mini{display:grid;place-items:center;text-align:center;min-height:220px;color:var(--muted);font-size:.9rem;padding:0 16px}
 .empty-mini i{font-size:1.8rem;color:#c6cddb;margin-bottom:10px;display:block}
 [hidden]{display:none!important}
-@media(min-width:1024px){.charts.flip{grid-template-columns:minmax(0,1.5fr) minmax(0,.9fr)}}
-.xscroll{overflow-x:auto;padding-bottom:4px}
-.xin{position:relative;height:320px;min-width:100%}
+@media(min-width:1024px){.charts.flip{grid-template-columns:minmax(0,1.55fr) minmax(0,.85fr)}}
+.xscroll{overflow-x:auto;padding-bottom:6px}
+.xin{position:relative;height:365px;min-width:100%}
 
 /* Table card */
 .tbl-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
@@ -214,7 +214,7 @@ footer{margin-top:36px;text-align:center;font-size:.8rem;color:var(--faint)}
 
     <div class="card chart-card" data-reveal id="card-dept">
       <div class="ch-head">
-        <div><h2>Estudante tuir departamentu</h2><p>Mane no feto iha departamentu ida-idak.</p></div>
+        <div><h2>Estudante tuir departamentu</h2><p>Mane no feto iha departamentu ida-idak (ordenadu husi barak liu).</p></div>
         <div class="legend"><span style="--c:var(--mane)">Mane</span><span style="--c:var(--feto)">Feto</span></div>
       </div>
       <div class="xscroll" id="bar-box"><div class="xin" id="dept-inner"><canvas id="chart-dept" role="img" aria-label="Grafiku bar estudante tuir departamentu"></canvas></div></div>
@@ -385,7 +385,7 @@ if (motion) {
 }
 
 /* ---------- Charts: built when their card enters the viewport ---------- */
-const C = { mane: '#1e4fd8', feto: '#f08a24', grid: '#e7ebf3', muted: '#566074' };
+const C = { mane: '#1e4fd8', feto: '#f08a24', grid: '#e7ebf3', muted: '#566074', dark: '#101828' };
 if (window.Chart) {
   Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
   Chart.defaults.color = C.muted;
@@ -410,60 +410,100 @@ once($('card-gender'), () => {
 
 // Shared helpers
 const parse = (id) => { try { const d = JSON.parse($(id).textContent || '[]'); return Array.isArray(d) ? d : []; } catch (e) { return []; } };
-const wrapLabel = (str, n = 12) => {
-  const out = []; let line = '';
-  String(str).split(' ').forEach((w) => {
-    if (line && (line + ' ' + w).length > n) { out.push(line); line = w; } else { line = (line + ' ' + w).trim(); }
-  });
-  if (line) out.push(line);
-  return out;
+const formatDeptLabel = (raw) => {
+  if (!raw) return 'N/A';
+  if (String(raw).includes(' ')) return String(raw);
+  return String(raw)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
 };
-// Draws the number at the end of each bar (works for vertical and horizontal bars)
+
+// Draws the number cleanly above each bar
 const valueLabels = {
   id: 'valueLabels',
   afterDatasetsDraw(chart) {
     const { ctx } = chart, horizontal = chart.options.indexAxis === 'y';
     ctx.save();
-    ctx.font = '600 11px ' + Chart.defaults.font.family;
-    ctx.fillStyle = C.muted;
+    ctx.font = '700 11.5px ' + Chart.defaults.font.family;
+    ctx.fillStyle = C.dark;
     chart.data.datasets.forEach((ds, di) => {
       if (!chart.isDatasetVisible(di)) return;
       chart.getDatasetMeta(di).data.forEach((bar, i) => {
         const v = ds.data[i]; if (!v) return;
-        if (horizontal) { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(v, bar.x + 6, bar.y); }
-        else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(v, bar.x, bar.y - 4); }
+        if (horizontal) { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(v, bar.x + 7, bar.y); }
+        else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(v, bar.x, bar.y - 5); }
       });
     });
     ctx.restore();
   },
 };
 
-// 2) Departamentu: vertical bar chart, mane and feto side by side
-const dept = parse('dept-data');
-if (!dept.length) {
+// 2) Departamentu: vertical bar chart, sorted descending & angled labels like reference
+const rawDept = parse('dept-data')
+  .map((d) => ({
+    label: formatDeptLabel(d.departamentu),
+    mane: +d.mane || 0,
+    feto: +d.feto || 0,
+  }))
+  .map((d) => ({ ...d, total: d.mane + d.feto }))
+  .filter((d) => d.total > 0)
+  .sort((a, b) => b.total - a.total);
+
+if (!rawDept.length) {
   $('bar-box').hidden = true; $('dept-empty').hidden = false;
   document.querySelector('#card-dept .legend').hidden = true;
 } else {
   once($('card-dept'), () => {
-    $('dept-inner').style.minWidth = dept.length * 92 + 'px';   // scrolls sideways on small screens
+    const perItemWidth = 115;
+    $('dept-inner').style.minWidth = Math.max($('bar-box').clientWidth, rawDept.length * perItemWidth) + 'px';
     $('chart-dept').setAttribute('aria-label', 'Estudante tuir departamentu: ' +
-      dept.map((d) => `${d.departamentu || 'N/A'} ${(+d.mane || 0) + (+d.feto || 0)}`).join(', ') + '.');
+      rawDept.map((d) => `${d.label} ${d.total}`).join(', ') + '.');
     new Chart($('chart-dept'), {
       type: 'bar',
-      data: { labels: dept.map((d) => d.departamentu || 'N/A'), datasets: [
-        { label: 'Mane', data: dept.map((d) => +d.mane || 0), backgroundColor: C.mane, borderRadius: 6, borderSkipped: false },
-        { label: 'Feto', data: dept.map((d) => +d.feto || 0), backgroundColor: C.feto, borderRadius: 6, borderSkipped: false },
-      ] },
-      options: { responsive: true, maintainAspectRatio: false, animation: anim,
+      data: {
+        labels: rawDept.map((d) => d.label),
+        datasets: [
+          { label: 'Mane', data: rawDept.map((d) => d.mane), backgroundColor: C.mane, borderRadius: 6, borderSkipped: false, maxBarThickness: 36 },
+          { label: 'Feto', data: rawDept.map((d) => d.feto), backgroundColor: C.feto, borderRadius: 6, borderSkipped: false, maxBarThickness: 36 },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: anim,
+        layout: { padding: { top: 10, right: 16, left: 4, bottom: 4 } },
         interaction: { mode: 'index', intersect: false },
-        datasets: { bar: { categoryPercentage: .72, barPercentage: .92 } },
-        plugins: { legend: { display: false },
-          tooltip: { callbacks: { footer: (items) => 'Total: ' + items.reduce((t, i) => t + i.parsed.y, 0) } } },
+        datasets: { bar: { categoryPercentage: .68, barPercentage: .88 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              footer: (items) => 'Total: ' + items.reduce((t, i) => t + i.parsed.y, 0),
+            },
+          },
+        },
         scales: {
-          x: { grid: { display: false }, border: { display: false },
-               ticks: { autoSkip: false, maxRotation: 0, callback(v) { return wrapLabel(this.getLabelForValue(v)); } } },
-          y: { beginAtZero: true, grace: '12%', ticks: { precision: 0 }, grid: { color: C.grid }, border: { display: false } },
-        } },
+          x: {
+            grid: { display: false },
+            border: { display: true, color: '#cbd5e1', width: 1.5 },
+            ticks: {
+              autoSkip: false,
+              minRotation: 35,
+              maxRotation: 40,
+              padding: 6,
+              font: { size: 11.5, weight: '600' },
+              color: C.dark,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            grace: '14%',
+            ticks: { precision: 0 },
+            grid: { color: C.grid },
+            border: { display: true, color: '#cbd5e1', width: 1.5 },
+          },
+        },
+      },
       plugins: [valueLabels],
     });
   });
